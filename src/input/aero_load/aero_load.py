@@ -9,11 +9,16 @@ import numpy as np
 import plotly.graph_objects as go
 import pandas as pd
 
+# debug method
+DEBUG = False
+
 # define class
-class LoadAero:
+class AeroLoad:
     """ the class gets a .dat file and plots the distribution, plus other info """
 
-    def __init__(self, filename):
+    def __init__(self, filename, Ca, la):
+        self.span = la
+        self.chord = Ca
         self.file = filename
 
     def get_mat(self):
@@ -34,8 +39,8 @@ class LoadAero:
         return self.get_mat().shape[0], self.get_mat().shape[1]
 
     def get_coord(self):
-        C_a = 0.547
-        l_a = 2.771
+        Ca = self.chord
+        la = self.span
 
         N_z, N_x = self.get_shape()
 
@@ -50,10 +55,10 @@ class LoadAero:
             return coord
 
         for i in range(N_z):
-            z_coord[i] = get_linspace(theta_z[i], theta_z[i + 1], C_a)
+            z_coord[i] = get_linspace(theta_z[i], theta_z[i + 1], Ca)
 
         for i in range(N_x):
-            x_coord[i] = get_linspace(theta_x[i], theta_x[i + 1], l_a)
+            x_coord[i] = get_linspace(theta_x[i], theta_x[i + 1], la)
 
         return z_coord, x_coord
 
@@ -66,9 +71,15 @@ class LoadAero:
 
         fig.show()
 
-# execute
-a320 = LoadAero("load.dat")
-a320.plot_distribution()
+    def get_distribution(self):
+        # TODO: implement airload discretization here.
+        q_x = np.ones(81)
+        return q_x
+
+# execute when debugging
+if DEBUG:
+    a320 = AeroLoad("load_A380.dat", 0.547, 2.711)
+    a320.plot_distribution()
 
 
 
