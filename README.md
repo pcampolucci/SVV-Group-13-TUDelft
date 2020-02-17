@@ -1,2 +1,3 @@
 # SVV-Group-13-TUDelft
-Repository for structural model simulation and validation
+
+![main](img/main.png)
