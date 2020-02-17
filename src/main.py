@@ -1,13 +1,20 @@
 """
-Aerodynamic Load Analizer and Plotter
+Main code
 
 @author: Willem Dekeyser
 """
+
+# importing other folders & files
+import sys
+sys.path.append('./aerodynamic_loading')
+
 
 # importing packages
 import numpy as np
 import plotly.graph_objects as go
 import pandas as pd
+from aero_load import *
+
 
 # ------------------- Input parameters ----------------------------------
 # Geometric inputs
