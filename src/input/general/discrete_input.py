@@ -7,7 +7,7 @@ Author: Pietro Campolucci
 DEBUG = True
 
 input_dict = {
-
+    # Geometry
     'Ca': {'A': 0.547, 'B': 0.605},   # [m]  Chord length aileron   A: 0.547   B: 0.605
     'la': {'A': 2.771, 'B': 2.661},   # [m]  Span aileron           A: 2.771   B: 2.661
     'x1': {'A': 0.153, 'B': 0.172},  # [m]  Location hinge 1       A: 0.153   B: 0.172
@@ -19,10 +19,14 @@ input_dict = {
     'h': {'A': 0.225, 'B': 0.205},  # [m]  Height aileron         A: 0.225   B: 0.205
     'tsk': {'A': 0.0011, 'B': 0.0011},  # [m]  Skin thickness         A: 0.0011  B: 0.0011
     'tsp': {'A': 0.0029, 'B': 0.0029},  # [m]  Spar thickness         A: 0.0029  B: 0.0029
-    'tst': {'A': 0.0012, 'B': 0.0012}, # [m]  Thickness stiffener    A: 0.0012  B: 0.0012
+    'tst': {'A': 0.0012, 'B': 0.0012},  # [m]  Thickness stiffener    A: 0.0012  B: 0.0012
     'hst': {'A': 0.015, 'B': 0.016},   # [m]  Height stiffener       A: 0.015   B: 0.016
     'wst': {'A': 0.02, 'B': 0.019},    # [m]  Width stiffener        A: 0.02    B: 0.019
     'nst': {'A': 17, 'B': 15},  # [-]  Number of stiffeners   A: 17      B: 15
+
+    # Material properties
+    'E': {'A': 73.1e9, 'B': 73.1e9},  # [Pa]  Modulus of Elasticity
+    'G': {'A': 28e9, 'B': 28e9},  # [Pa]  Shear Modulus
 
     # Displacements
     'd1': {'A': 0.01103, 'B': 0.01154},  # [m]    Displacement hinge 1   A: 0.01103 B: 0.01154
