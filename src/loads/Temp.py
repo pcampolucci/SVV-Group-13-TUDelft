@@ -33,23 +33,29 @@ P = 91.7  # [kN]  Load actuator 2     A: 91.7     # B: 97.4
 # still need
 
 q = 1
+Mqz = 1
 Tq = 1
-dist_scT1 = 1
+dist_scFa1_y = 1
+dist_scFa1_z = 1
+
 #-------------------------------------------------------------------------------
 
 # order variables matrix
 # F_z1 , F_z2, F_z3, F_a, F_y1, F_y2, F_y3, c1, c2, c3, c4, c5
 
 left_column = np.array([
-    [la-x1, la-x2, la-x3, np.cos(theta)*(la-xa1), 0, 0, 0, 0, 0, 0, 0, 0],  # Moment y equation at la
-    [0, 0, 0, np.sin(theta)*(la-xa1), la-x1, la-x2, la-x3, 0, 0, 0, 0, 0],  # Moment y equation at la
-    [0, 0, 0, ]
+    [la-x1, la-x2, la-x3, np.cos(theta)*(la-xa1), 0, 0, 0, 0, 0, 0, 0, 0],  # Moment around y equation at la
+    [0, 0, 0, np.sin(theta)*(la-xa1), la-x1, la-x2, la-x3, 0, 0, 0, 0, 0],  # Moment around z equation at la
+    [0, 0, 0, dist_scFa1_y*np.cos(theta) + dist_scFa1_z*np.sin(theta), 0, 0, 0, 0, 0, 0, 0, 0]  # Torque aka Moment around x at la
+    [1, 1, 1, np.cos(theta), 0, 0, 0, 0, 0, 0, 0, 0],  # shear y
+
 ])
 
 right_column = np.array([
     [P*np.cos(theta)*(la-xa2)],
-    [P*np.sin(theta)*(la-xa2)+q],
-
+    [P*np.sin(theta)*(la-xa2)+Mqz],
+    [dist_scFa1_y*np.cos(theta)*P + dist_scFa1_z*np.sin(theta)*P + Tq],
+    [P*np.cos(theta)]
 
 ])
 
