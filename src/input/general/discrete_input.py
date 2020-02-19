@@ -14,13 +14,15 @@ input_dict = {
     'x2': {'A': 1.281, 'B': 1.211},  # [m]  Location hinge 2       A: 1.281   B: 1.211
     'x3': {'A': 2.681, 'B': 2.591},  # [m]  Location hinge 3       A: 2.681   B: 2.591
     'xa': {'A': 0.28, 'B': 0.35},   # [m]  Dist between A1 & A2   A: 0.28    B: 0.35
+    'xa1': {'A': 1.281-0.28/2, 'B': 1.211-0.35/2},  # [m] Location actuator 1
+    'xa2': {'A': 1.281+0.28/2, 'B': 1.211+0.35/2},  # [m] Location actuator 2
     'h': {'A': 0.225, 'B': 0.205},  # [m]  Height aileron         A: 0.225   B: 0.205
     'tsk': {'A': 0.0011, 'B': 0.0011},  # [m]  Skin thickness         A: 0.0011  B: 0.0011
     'tsp': {'A': 0.0029, 'B': 0.0029},  # [m]  Spar thickness         A: 0.0029  B: 0.0029
     'tst': {'A': 0.0012, 'B': 0.0012}, # [m]  Thickness stiffener    A: 0.0012  B: 0.0012
     'hst': {'A': 0.015, 'B': 0.016},   # [m]  Height stiffener       A: 0.015   B: 0.016
     'wst': {'A': 0.02, 'B': 0.019},    # [m]  Width stiffener        A: 0.02    B: 0.019
-    'nst' : {'A': 17, 'B': 15},  # [-]  Number of stiffeners   A: 17      B: 15
+    'nst': {'A': 17, 'B': 15},  # [-]  Number of stiffeners   A: 17      B: 15
 
     # Displacements
     'd1': {'A': 0.01103, 'B': 0.01154},  # [m]    Displacement hinge 1   A: 0.01103 B: 0.01154
