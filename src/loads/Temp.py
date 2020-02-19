@@ -24,7 +24,7 @@ nst = 17      # [-]  Number of stiffeners   A: 17      B: 15
 
 d1    = 0.01103  # [m]    Displacement hinge 1   A: 0.01103 B: 0.01154
 d3    = 0.01642  # [m]    Displacement hinge 3   A: 0.01642 B: 0.01840
-theta = 28       # [deg]  Max upward deflection  A: 26      B: 28
+theta = 26       # [deg]  Max upward deflection  A: 26      B: 28
 
 # Loads
 P = 91.7  # [kN]  Load actuator 2     A: 91.7     # B: 97.4
@@ -40,10 +40,14 @@ xa  = 0.28    # [m]  Dist between A1 & A2   A: 0.28    B: 0.35
 xa1 = 1.281-0.28/2
 xa2 = 1.281+0.28/2
 
-theta = 28       # [deg]  Max upward deflection  A: 26      B: 28
+d1    = 0.01103  # [m]    Displacement hinge 1   A: 0.01103 B: 0.01154
+d3    = 0.01642  # [m]    Displacement hinge 3   A: 0.01642 B: 0.01840
+
+theta = 26       # [deg]  Max upward deflection  A: 26      B: 28
 P = 91.7  # [kN]  Load actuator 2     A: 91.7     # B: 97.4
 
 E = 73.1e9
+G = 28e9
 # still need
 # forces
 q = 1  # resultant aeroforce
@@ -72,7 +76,8 @@ left_column = np.array([
     [0, 0, 0, np.sin(theta), 1, 1, 1, 0, 0, 0, 0, 0],  # force/shear z
     [0, 0, 0, cte_v/6*np.sin(theta)*(x2-xa1)**3, cte_v/6*(x2-x1)**3, 0, 0, x2, 1, 0, 0, 0],  # v deflection at x2
     [0, 0, 0, cte_v/6*np.sin(theta)*(xa2-xa1)**3, cte_v/6*(xa2-x1)**3, cte_v/6*(xa2-x2)**3, 0, xa2, 1, 0, 0, 0],  # v deflection at xa2
-    [cte_w/6*(x2-x1)**3, 0, 0, cte_w/6*np.cos(theta)*(x2-xa1)**3, 0, 0, 0, x2, 1, 0]  # w deflection at x2
+    [cte_w/6*(x2-x1)**3, 0, 0, cte_w/6*np.cos(theta)*(x2-xa1)**3, 0, 0, 0, x2, 1, 0],  # w deflection at x2
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  # v deflection at x1
 ])
 
 right_column = np.array([
@@ -84,6 +89,11 @@ right_column = np.array([
     [cte_v*qq],  # v deflection at x2
     [cte_v*qq],  # v deflection at xa2
     [0],  # w deflection at x2
+
+    [d1*np.sin(theta)],  # v deflection at x1
+    [d1*np.cos(theta)],  # w deflection at x1
+    [d1*np.sin(theta)],  # v deflection at x3
+    [d1*np.cos(theta)]  # w deflection at x3
 ])
 
-print(left_column.shape)
+print(right_column.shape)
