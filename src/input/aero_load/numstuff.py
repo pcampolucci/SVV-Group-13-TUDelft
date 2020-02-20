@@ -2,7 +2,7 @@ from mpl_toolkits import mplot3d
 import numpy as np
 import matplotlib.pyplot as plt
 
-loads = np.genfromtxt("acloada320.csv", delimiter =",")
+loads = np.genfromtxt("load_A380.dat", delimiter =",")
 testloads = np.ones([81,41])
 
 zset = []
