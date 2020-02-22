@@ -22,12 +22,12 @@ def increase_stiffeners():
 
     input_dict['nst_circle'][a] = 30
     test_section = CrossSection(input_dict, a)
-    assert test_section.centroid()[1] > -0.2134
+    assert test_section.get_centroid()[1] > -0.2134
     input_dict['nst_circle'][a] = 5
     input_dict['nst_triangle'][a] = 30
     test_section = CrossSection(input_dict, a)
-    assert test_section.centroid()[1] < -0.2134
-    assert test_section.centroid()[0] == 0
+    assert test_section.get_centroid()[1] < -0.2134
+    assert test_section.get_centroid()[0] == 0
     input_dict['nst_triangle'][a] = 12
 
     test_section.get_report()

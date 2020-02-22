@@ -26,6 +26,9 @@ class AeroLoad:
 
         mat = np.zeros((81, 41))
 
+        if self.file[-4:] != '.dat':
+            return 0
+
         with open(self.file) as f:
             row = 0
             for line in f:
@@ -65,6 +68,12 @@ class AeroLoad:
 
     def get_discrete_distribution(self):
         mat = self.get_mat()
+
+        if type(mat) is int:
+            constant = float(self.file)
+            q_x = np.ones(50) * constant
+            return q_x
+
         coord = self.get_coord()
 
         q_x = []

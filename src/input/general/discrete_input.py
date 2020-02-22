@@ -4,7 +4,11 @@ Title: Input Dictionary
 Author: Pietro Campolucci
 """
 
+# import packages
+import os
+
 DEBUG = True
+path = os.path.dirname(os.path.realpath(__file__)).rsplit(os.sep, 2)[0]
 
 input_dict = {
 
@@ -32,6 +36,6 @@ input_dict = {
     'P': {'A': 91.7, 'B': 97.4},  # [kN]  Load actuator 2     A: 91.7     # B: 97.4
 
     # dat files
-    '.dat': {'A': 'load_A380.dat', 'B': 'load_B737'}
+    '.dat': {'A': path + '/input/aero_load/load_A380.dat', 'B': '55.7'}
 
 }

@@ -28,6 +28,10 @@ class Combine():
         self.aero_load = Input(self.a).aero_input()
         self.cross_section_dict = Input(self.a).cross_section_input()
 
+    def get_input_report(self):
+        Input(self.a).get_input_report()
+        return 0
+
     def get_deflection_report(self):
         # TODO: given the input based on aircraft type, use the Loads toolkit to give results
         return print("not yet implemented")
