@@ -39,7 +39,7 @@ class Input:
 # ======================================
 # Debugging
 
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     load = Input('A').aero_input()

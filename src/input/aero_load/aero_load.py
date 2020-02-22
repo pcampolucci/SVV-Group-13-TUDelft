@@ -21,13 +21,14 @@ class AeroLoad:
         self.span = la
         self.chord = Ca
         self.file = filename
+        self.is_constant = self.file[-4:] != '.dat'
 
     def get_mat(self):
 
         mat = np.zeros((81, 41))
 
-        if self.file[-4:] != '.dat':
-            return 0
+        if self.is_constant:
+            return np.ones((81, 41))
 
         with open(self.file) as f:
             row = 0
@@ -69,9 +70,9 @@ class AeroLoad:
     def get_discrete_distribution(self):
         mat = self.get_mat()
 
-        if type(mat) is int:
+        if self.is_constant:
             constant = float(self.file)
-            q_x = np.ones(50) * constant
+            q_x = np.ones(41) * constant
             return q_x
 
         coord = self.get_coord()
@@ -99,7 +100,7 @@ class AeroLoad:
 
         # find x location
         i = 0
-        while x < span[i] and i < 39:
+        while x < span[i] and i < len(span) - 2:
             i += 1
 
         # get local linear relationship
@@ -132,7 +133,7 @@ class AeroLoad:
         plt.figure(1)
 
         # plot discrete distribution
-        for i in range(len(coord)):
+        for i in range(len(q_x)):
             plt.plot([coord[i], coord[i]], [0, q_x[i]], color='b')
 
         # plot distribution with linear interpolation
