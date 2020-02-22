@@ -12,33 +12,79 @@ from src.input.general.discrete_input import input_dict
 from src.input.cross_section.cross_section import CrossSection
 a = 'A'
 
+# debugging function
+def get_plot(debug_bool, section):
+    if debug_bool:
+        section.get_report()
+
 # =========== DEFINE TESTING ===========
 
 # set up test by varying some parameters and expecting a increase or decrease
-# {'area_st': 4.055999999999999e-05, 'SC': 0, 'Centroid': (0, -0.2134427067955158), 'Izz': 0.0009204075675260348, 'Iyy': 0.03779351266941667, 'Ixx': 0.002645867400787454}
 
+def increase_stiffeners(debug):
 
-def increase_stiffeners():
+    # initialize section + parameters
+    test_section = CrossSection(input_dict, a)
+    base_centroid = test_section.get_centroid()[1]
+    base_i_zz = test_section.get_moments_inertia()[0]
+    base_i_xx = test_section.get_moments_inertia()[2]
+    get_plot(debug, test_section)
 
+    # add stiffeners in front, assert change in mom and center
     input_dict['nst_circle'][a] = 30
     test_section = CrossSection(input_dict, a)
-    assert test_section.get_centroid()[1] > -0.2134
+    get_plot(debug, test_section)
+    assert test_section.get_centroid()[1] > base_centroid
+    assert test_section.get_moments_inertia()[0] > base_i_zz
+    assert test_section.get_moments_inertia()[2] > base_i_xx
+
+    # add stiffeners in the back, assert change in mom and center
     input_dict['nst_circle'][a] = 5
     input_dict['nst_triangle'][a] = 30
     test_section = CrossSection(input_dict, a)
-    assert test_section.get_centroid()[1] < -0.2134
-    assert test_section.get_centroid()[0] == 0
+    get_plot(debug, test_section)
+    assert test_section.get_centroid()[1] < base_centroid
+    assert test_section.get_moments_inertia()[0] > base_i_zz
+    assert test_section.get_moments_inertia()[2] > base_i_xx
+
+    # back to normal dict
     input_dict['nst_triangle'][a] = 12
 
-    test_section.get_report()
 
-def increase_area_stiffeners():
-    input_dict['hst'][a] = 0.03
+def increase_area_structures(debug):
+    """ increasing values for skin, rib and stiffener thickness """
+
+    # initialize section + parameters
+    test_section = CrossSection(input_dict, a)
+    base_centroid = test_section.get_centroid()[1]
+    base_i_zz = test_section.get_moments_inertia()[0]
+    base_i_xx = test_section.get_moments_inertia()[2]
+    area = test_section.stiffener_area()
+    get_plot(debug, test_section)
+
+    # increase skin thickness
+    input_dict['nst_circle'][a] = 30
+    test_section = CrossSection(input_dict, a)
+    get_plot(debug, test_section)
+    assert test_section.get_centroid()[1] > base_centroid
+    assert test_section.get_moments_inertia()[0] > base_i_zz
+    assert test_section.get_moments_inertia()[2] > base_i_xx
+    assert test_section.stiffener_area() > area
+
+    # increase rib thickness
+    input_dict['nst_circle'][a] = 5
+    input_dict['nst_triangle'][a] = 30
+    test_section = CrossSection(input_dict, a)
+    get_plot(debug, test_section)
+    assert test_section.get_centroid()[1] < base_centroid
+    assert test_section.get_moments_inertia()[0] > base_i_zz
+    assert test_section.get_moments_inertia()[2] > base_i_xx
+
 
     test_section = CrossSection(input_dict, a)
-    test_section.get_report()
+    get_plot(debug, test_section)
 
 
 # =========== EXECUTE TESTS ===========
-increase_stiffeners()
-increase_area_stiffeners()
+increase_stiffeners(False)
+increase_area_stiffeners(True)
