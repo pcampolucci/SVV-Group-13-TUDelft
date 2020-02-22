@@ -26,6 +26,3 @@ deflection = start.get_deflection_report()
 twist = start.get_twist_report()
 stress = start.get_max_stress_report()
 
-
-
-
