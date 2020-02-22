@@ -5,6 +5,10 @@ Description: The script here gets the input for the specified aircraft and the s
              by the user. There are 3 possible scenarios, for each of them the dedicated function calls
              the right single load packages, fill them with the correct inputs and generates the report
 
+             - aero_input provided as function of x
+             - cross_section_input provided as dictionary (consult cross_section.py for info)
+             - discrete_load_dict provided as dictionary (consult discrete_input.py for info)
+
 Author: Pietro Campolucci
 """
 
@@ -23,6 +27,10 @@ class Combine():
         self.discrete_load_dict = Input(self.a).get_discrete()
         self.aero_load = Input(self.a).aero_input()
         self.cross_section_dict = Input(self.a).cross_section_input()
+
+    def get_input_report(self):
+        Input(self.a).get_input_report()
+        return 0
 
     def get_deflection_report(self):
         # TODO: given the input based on aircraft type, use the Loads toolkit to give results

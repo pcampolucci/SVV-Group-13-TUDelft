@@ -4,7 +4,11 @@ Title: Input Dictionary
 Author: Pietro Campolucci
 """
 
+# import packages
+import os
+
 DEBUG = True
+path = os.path.dirname(os.path.realpath(__file__)).rsplit(os.sep, 2)[0]
 
 input_dict = {
 
@@ -20,7 +24,8 @@ input_dict = {
     'tst': {'A': 0.0012, 'B': 0.0012}, # [m]  Thickness stiffener    A: 0.0012  B: 0.0012
     'hst': {'A': 0.015, 'B': 0.016},   # [m]  Height stiffener       A: 0.015   B: 0.016
     'wst': {'A': 0.02, 'B': 0.019},    # [m]  Width stiffener        A: 0.02    B: 0.019
-    'nst' : {'A': 17, 'B': 15},  # [-]  Number of stiffeners   A: 17      B: 15
+    'nst_circle': {'A': 5, 'B': 5},  # [-]  Number of stiffeners   A: 17      B: 15
+    'nst_triangle': {'A': 12, 'B': 10},  # [-]  Number of stiffeners   A: 17      B: 15
 
     # Displacements
     'd1': {'A': 0.01103, 'B': 0.01154},  # [m]    Displacement hinge 1   A: 0.01103 B: 0.01154
@@ -31,6 +36,6 @@ input_dict = {
     'P': {'A': 91.7, 'B': 97.4},  # [kN]  Load actuator 2     A: 91.7     # B: 97.4
 
     # dat files
-    '.dat': {'A': 'load_A380.dat', 'B': 'load_B737'}
+    '.dat': {'A': path + '/input/aero_load/load_A380.dat', 'B': '55.7'}
 
 }

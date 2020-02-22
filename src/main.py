@@ -21,6 +21,7 @@ scenario = choose_scenario()
 # get reports
 start = Combine(aircraft)
 
+input_report = start.get_input_report()
 deflection = start.get_deflection_report()
 twist = start.get_twist_report()
 stress = start.get_max_stress_report()
