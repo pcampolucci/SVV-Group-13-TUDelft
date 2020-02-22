@@ -10,7 +10,6 @@ Author: Pietro Campolucci
 import pytest
 
 # =========== DEFINE TESTING ===========
-
 def test_moment_of_inertia():
     geometric_value_1 = 5
     assert geometric_value_1 * 2 == 10, "test for moment of inertia passed"

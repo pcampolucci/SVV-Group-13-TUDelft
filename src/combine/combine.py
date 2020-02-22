@@ -5,6 +5,10 @@ Description: The script here gets the input for the specified aircraft and the s
              by the user. There are 3 possible scenarios, for each of them the dedicated function calls
              the right single load packages, fill them with the correct inputs and generates the report
 
+             - aero_input provided as function of x
+             - cross_section_input provided as dictionary (consult cross_section.py for info)
+             - discrete_load_dict provided as dictionary (consult discrete_input.py for info)
+
 Author: Pietro Campolucci
 """
 
