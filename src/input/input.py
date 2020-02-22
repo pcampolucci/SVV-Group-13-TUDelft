@@ -22,7 +22,7 @@ class Input:
         self.a = aircraft
 
     def aero_input(self):
-        """ returns distribution q(x) as an array """
+        """ returns distribution q(x) as a function """
         return AeroLoad(input_dict[".dat"][self.a], input_dict["Ca"][self.a], input_dict["la"][self.a])
 
     def cross_section_input(self):

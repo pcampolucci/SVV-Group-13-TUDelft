@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # debug method
-DEBUG = True
+DEBUG = False
 
 # define class
 class AeroLoad:
