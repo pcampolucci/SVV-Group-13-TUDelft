@@ -39,6 +39,7 @@ input_dict = {
     '.dat': {'A': path + '/input/aero_load/load_A380.dat', 'B': '-55.7'},
 
     # other
-    'G': {'A': 28e9, 'B': 28e9}
+    'G': {'A': 28e9, 'B': 28e9},
+    'E': {'A': 1, 'B': 1}
 
 }
