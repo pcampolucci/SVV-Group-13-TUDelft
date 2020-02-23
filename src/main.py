@@ -18,6 +18,8 @@ print("=" * 100)
 aircraft = choose_aircraft()
 scenario = choose_scenario()
 
+print()
+
 # get reports
 start = Combine(aircraft)
 

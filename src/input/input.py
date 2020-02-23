@@ -24,7 +24,7 @@ class Input:
 
     def aero_input(self):
         """ returns distribution q(x) as a function """
-        return AeroLoad(input_dict[".dat"][self.a], input_dict["Ca"][self.a], input_dict["la"][self.a])
+        return AeroLoad(self.a)
 
     def cross_section_input(self):
         """ returns dictionary with all geometrical info on cross section """

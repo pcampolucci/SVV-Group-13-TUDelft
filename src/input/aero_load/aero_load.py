@@ -9,6 +9,7 @@ import numpy as np
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import pandas as pd
+from src.input.general.discrete_input import input_dict
 
 # debug method
 DEBUG = False
@@ -17,10 +18,11 @@ DEBUG = False
 class AeroLoad:
     """ the class gets a .dat file and plots the distribution, plus other info """
 
-    def __init__(self, filename, Ca, la):
-        self.span = la
-        self.chord = Ca
-        self.file = filename
+    def __init__(self, aircraft):
+        self.a = aircraft
+        self.span = input_dict['la'][self.a]
+        self.chord = input_dict['Ca'][self.a]
+        self.file = input_dict['.dat'][self.a]
         self.is_constant = self.file[-4:] != '.dat'
 
     def get_mat(self):
@@ -146,7 +148,7 @@ class AeroLoad:
 
 # execute when debugging
 if DEBUG:
-    a320 = AeroLoad("load_A380.dat", 0.547, 2.711)
+    a320 = AeroLoad('A')
     a320.plot_distribution_2D()
 
 
