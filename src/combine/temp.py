@@ -126,6 +126,7 @@ plt.show()
 #Moment around z
 
 def Moment_z(x):
+
     Mz = -qx
 
     if x > x1:
@@ -160,6 +161,7 @@ plt.show()
 #Shear force in y
 
 def Shear_y(x):
+
     Sy = -qx
 
     if x > x1:

@@ -6,6 +6,7 @@ from src.input.cross_section.cross_section import CrossSection
 from src.input.general.discrete_input import input_dict
 
 
+
 class ShearStress:
 
     def __init__(self):

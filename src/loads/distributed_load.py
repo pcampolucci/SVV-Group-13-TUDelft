@@ -1,11 +1,9 @@
+"""
+Title: Functions for aerodynamic distributed load discretization
+"""
+
 import numpy as np
 from src.input.input import Input
-
-# inputs
-x_end = 1  # [m] end point, set calc will be done for distr from 0 till this point
-stepsize_aero = 0.001  # [m] set the distance between points in trapezoidal rule
-load = Input('A').aero_input()
-
 
 
 def get_discrete_load(x, cont_load, step):
@@ -47,14 +45,6 @@ def moment_resultant(x, cont_load, step):
     location = location_resultant(x, cont_load, step)
     return resultant*(location-x)
 
-
-# Test with boeing data ( which is a cte load)
-#Qdisc = get_discrete_load(x_end, load, stepsize_aero)
-#Q = magnitude_resultant(x_end, load, stepsize_aero)
-#Qx = location_resultant(x_end, load, stepsize_aero)
-#QM = moment_resultant(x_end, load, stepsize_aero)
-
-
 # --------------------------------------------------------------------------------------------
 
 def angle_distributed(x, cont_load, step):
@@ -70,4 +60,14 @@ def deflection_distributed(x, cont_load, step):
         discrete_angle[int(i/step)] = angle_distributed(i, cont_load, step)
     return trapezoidal_rule(discrete_angle, step)
 
-print(deflection_distributed(0,load,stepsize_aero))
+
+# ===============================================================================
+DEBUG = True
+
+if DEBUG:
+    # inputs
+    x_end = 1  # [m] end point, set calc will be done for distr from 0 till this point
+    stepsize_aero = 0.001  # [m] set the distance between points in trapezoidal rule
+    load = Input('A').aero_input()
+
+    print(deflection_distributed(0, load, stepsize_aero))

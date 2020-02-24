@@ -21,7 +21,7 @@ class CrossSection:
     def stiffener_spacing(self):
 
         # input required
-        h = self.input['h'][self.aircraft]
+        h = self.input['h'][self.aircraft]/2
         c_a = self.input['Ca'][self.aircraft]
         spacing_circle = self.input['nst_circle'][self.aircraft] + 1
         spacing_triangle = self.input['nst_triangle'][self.aircraft] + 2
@@ -37,7 +37,7 @@ class CrossSection:
     def boom_locations(self):
 
         # input required
-        h = self.input['h'][self.aircraft]
+        h = self.input['h'][self.aircraft]/2
         c_a = self.input['Ca'][self.aircraft]
         stiffener_spacing_semicircle = self.stiffener_spacing()[1]
         spacing_circle = self.input['nst_circle'][self.aircraft] + 1
@@ -73,7 +73,7 @@ class CrossSection:
 
         # input required
         w = self.input['wst'][self.aircraft]
-        h = self.input['hst'][self.aircraft]
+        h = self.input['hst'][self.aircraft]/2
         t = self.input['tst'][self.aircraft]
 
         # function
@@ -86,7 +86,7 @@ class CrossSection:
         # input required
         c_a = self.input['Ca'][self.aircraft]
         t_sk = self.input['tsk'][self.aircraft]
-        h = self.input['h'][self.aircraft]
+        h = self.input['h'][self.aircraft]/2
         z_lst = self.boom_locations()[0]
         a_st = self.stiffener_area()
         n_st = self.input['nst_circle'][self.aircraft] + self.input['nst_triangle'][self.aircraft]
@@ -107,7 +107,7 @@ class CrossSection:
 
         # get input
         c_a = self.input['Ca'][self.aircraft]
-        h = self.input['h'][self.aircraft]
+        h = self.input['h'][self.aircraft]/2
 
         return np.sqrt((c_a - h) ** 2 + h ** 2)
 
@@ -116,7 +116,7 @@ class CrossSection:
         # input information
         c_a = self.input['Ca'][self.aircraft]
         t_sk = self.input['tsk'][self.aircraft]
-        h = self.input['h'][self.aircraft]
+        h = self.input['h'][self.aircraft]/2
         l_a = self.input['la'][self.aircraft]
         t_sp = self.input['tsp'][self.aircraft]
         z_lst = self.boom_locations()[0]
@@ -148,7 +148,7 @@ class CrossSection:
 
         # input data
         t_sk = self.input['tsk'][self.aircraft]
-        h = self.input['h'][self.aircraft]
+        h = self.input['h'][self.aircraft]/2
         t_sp = self.input['tsp'][self.aircraft]
         c_a = self.input['Ca'][self.aircraft]
         y_lst = self.boom_locations()[1]
@@ -249,15 +249,39 @@ class CrossSection:
 
         return qbl
 
+    def get_shear_flow_per_section(self):
+
+        # get input data
+        h = self.input['h'][self.aircraft]/2
+        incl = self.get_incl()
+        n1 = self.input['n_points'][self.aircraft]
+        Sy = 1
+        Sz = 1
+
+        # insert segment, b, Sy, Sz and n
+        qb1 = self.get_shear_flow([0, 1, 2], 0.5 * np.pi, Sy, Sz, n1)
+        qb2 = self.get_shear_flow([3], h, Sy, Sz, 2 * n1)
+        qb3 = self.get_shear_flow([4, 5, 6, 7, 8, 9, 10], incl, Sy, Sz, n1)
+        qb4 = self.get_shear_flow([11, 12, 13, 14, 15, 16, 17], incl, Sy, Sz, n1)
+        qb5 = self.get_shear_flow([18], h, Sy, Sz, 2 * n1)
+        qb6 = self.get_shear_flow([19, 20, 21], 0.5 * np.pi, Sy, Sz, n1)
+
+        return qb1, qb2, qb3, qb4, qb5, qb6
+
     def get_shear_center(self):
+
+        """ Sy = 1 , Sz = 0 ==> z coord get shear center
+            Sy = 1 , Sz = 1 ==> output shear flow distribution """
 
         # get input data
         c_a = self.input['Ca'][self.aircraft]
         t_sk = self.input['tsk'][self.aircraft]
-        h = self.input['h'][self.aircraft]
+        h = self.input['h'][self.aircraft]/2
         t_sp = self.input['tsp'][self.aircraft]
         incl = self.get_incl()
         n1 = self.input['n_points'][self.aircraft]
+        Sy = 1
+        Sz = 0
 
         # define functions
         def second_integration(z_lst, q_lst):
@@ -287,8 +311,6 @@ class CrossSection:
             return qb1, qb2, qb3, qb4, qb5, qb6
 
         # insert segment, b, Sy, Sz and n
-        Sy = 1
-        Sz = 1
         qb1 = self.get_shear_flow([0, 1, 2], 0.5 * np.pi, Sy, Sz, n1)
         qb2 = self.get_shear_flow([3], h, Sy, Sz, 2 * n1)
         qb3 = self.get_shear_flow([4, 5, 6, 7, 8, 9, 10], incl, Sy, Sz, n1)
@@ -339,7 +361,7 @@ class CrossSection:
 
         # get input values
         c_a = self.input['Ca'][self.aircraft]
-        h = self.input['h'][self.aircraft]
+        h = self.input['h'][self.aircraft]/2
 
         # function
         a1 = np.pi * h ** 2 / 2
@@ -359,7 +381,7 @@ class CrossSection:
         # input values
         l_a = self.input['la'][self.aircraft]
         t_sk = self.input['tsk'][self.aircraft]
-        h = self.input['h'][self.aircraft]
+        h = self.input['h'][self.aircraft]/2
         t_sp = self.input['tsp'][self.aircraft]
         a_1, a_2 = CrossSection.cell_area(self)
         per_semicircle = CrossSection.stiffener_spacing(self)[2]

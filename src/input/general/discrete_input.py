@@ -38,7 +38,7 @@ input_dict = {
     'd1': {'A': 0.01103, 'B': 0.01154},  # [m]    Displacement hinge 1   A: 0.01103 B: 0.01154
     'd3': {'A': 0.01642, 'B': 0.01154},  # [m]    Displacement hinge 3   A: 0.01642 B: 0.01840
     'theta': {'A': 26, 'B': 28},       # [deg]  Max upward deflection  A: 26      B: 28
-    'n_points': {'A': 20, 'B': 20},
+    'n_points': {'A': 20, 'B': 20},    # points for second integration, per segment
 
     # Loads
     'P': {'A': 91.7, 'B': 97.4},  # [kN]  Load actuator 2     A: 91.7     # B: 97.4
