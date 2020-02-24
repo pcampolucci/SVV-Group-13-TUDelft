@@ -58,14 +58,14 @@ def moment_resultant(x, cont_load, step):
 # --------------------------------------------------------------------------------------------
 
 def angle_distributed(x, cont_load, step):
-    discrete_moment = np.zeros((int(round(x+step)/step), round(1/step)))
+    discrete_moment = np.zeros(np.arange(0, x+step, step).shape)
     for i in np.arange(0+step, x+step, step):
         discrete_moment[int(round(i/step))] = moment_resultant(i, cont_load, step)
     return trapezoidal_rule(discrete_moment, step)
 
 
 def deflection_distributed(x, cont_load, step):
-    discrete_angle = np.empty((int(round(x+step)/step), round(1/step)))
+    discrete_angle = np.empty(np.arange(0, x+step, step).shape)
     for i in np.arange(0+step, x+step, step):
         discrete_angle[int(round(i/step))] = angle_distributed(i, cont_load, step)
     return trapezoidal_rule(discrete_angle, step)
