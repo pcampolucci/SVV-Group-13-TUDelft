@@ -1,3 +1,4 @@
+import numpy as np
 # -----
 # inputs
 la  = 2.771   # [m]  Span aileron           A: 2.771   B: 2.661
