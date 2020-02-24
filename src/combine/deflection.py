@@ -7,6 +7,7 @@ from src.input.input import Input
 from src.loads.distributed_load import moment_resultant, magnitude_resultant
 from src.loads.discrete_load import PointLoads
 from src.input.input import input_dict
+import matplotlib.pyplot as plt
 
 
 class Deflection:
@@ -16,7 +17,7 @@ class Deflection:
         self.discrete_input = PointLoads(self.aircraft).get_discrete_input()
         self.geometry_input = PointLoads(self.aircraft).get_geometry()
         self.point_loads = PointLoads(self.aircraft).get_discrete_loads()
-        self.aero_load = Input.aero_input(self.aircraft)
+        self.aero_load = Input(self.aircraft).aero_input()
         self.step = 10
 
     def Defl_Mz(self, x):
@@ -119,3 +120,30 @@ class Deflection:
             dwdx += -1 / E / Iyy * (F_z3 / 2 * (x - x3) ** (2))
 
         return dwdx
+
+    def plot_deflection(self):
+
+        la = input_dict['la'][self.aircraft]
+
+        x_axis = np.linspace(0, la, 50)
+        d_y = [float(self.Defl_My(d)) for d in x_axis]
+        d_z = [float(self.Defl_Mz(d)) for d in x_axis]
+        s_y = [float(self.Slope_y(d)) for d in x_axis]
+        s_z = [float(self.Slope_z(d)) for d in x_axis]
+
+        plt.figure()
+        plt.plot(x_axis, d_y)
+
+        plt.show()
+        return 0
+
+# =================================================================
+# Debugging
+
+DEBUG = True
+
+if DEBUG:
+    deflection_test = Deflection('A')
+    deflection_test.plot_deflection()
+
+

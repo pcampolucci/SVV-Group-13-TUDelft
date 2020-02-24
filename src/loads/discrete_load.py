@@ -54,7 +54,7 @@ class PointLoads:
 
         # geometry
         dsch = section.get_shear_center()[0]  # distance hingeline shear center
-        dsca_y = self.input['h']/2  # actuator to S.C. in y dir
+        dsca_y = self.input['h'][self.aircraft]/2  # actuator to S.C. in y dir
         dsca_z = dsch  # actuator to S.C. in z dir
         Izz = section.get_moments_inertia()[0]
         Iyy = section.get_moments_inertia()[2]
