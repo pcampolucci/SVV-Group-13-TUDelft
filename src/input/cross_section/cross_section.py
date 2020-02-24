@@ -144,16 +144,20 @@ class CrossSection:
 
         return i_zz, i_xx, i_yy
 
-    def get_shear_flow(self, segment, b, Sy, n):
+    def get_shear_flow(self, segment, b, Sy, Sz, n):
 
         # input data
         t_sk = self.input['tsk'][self.aircraft]
         h = self.input['h'][self.aircraft]
         t_sp = self.input['tsp'][self.aircraft]
+        c_a = self.input['Ca'][self.aircraft]
         y_lst = self.boom_locations()[1]
+        z_lst = self.boom_locations()[0]
         a_st = self.stiffener_area()
         i_zz = self.get_moments_inertia()[0]
+        i_yy = self.get_moments_inertia()[2]
         incl = self.get_incl()
+        zc = self.get_centroid()[1]
 
         def integrate(a, t, num, fx):
             """ enter function in the form lambda x:f(x) """
@@ -167,15 +171,22 @@ class CrossSection:
 
         qbl = []
         qb1t = (-Sy / i_zz) * (integrate(0, 0.5 * np.pi, 100, lambda x: h ** 2 * t_sk * np.sin(x)) + sum(
-            [a_st * i for i in (y_lst[0:3])]))
-        qb2t = (-Sy / i_zz) * (integrate(0, h, 100, lambda x: t_sp * x))
+            [a_st * i for i in (y_lst[0:3])])) + \
+               (-Sz / i_yy) * (integrate(0, 0.5 * np.pi, 100, lambda x: (h - h * np.cos(x) - zc) * h * t_sk) + sum(
+            [a_st * (i - zc) for i in (z_lst[0:3])]))
+        qb2t = (-Sy / i_zz) * (integrate(0, h, 100, lambda x: t_sp * x)) + (-Sz / i_yy) * (
+            integrate(0, h, 100, lambda x: t_sp * (-h - zc)))
         qb3t = (-Sy / i_zz) * (integrate(0, incl, 100, lambda x: (h - (h / incl) * x) * t_sk) + sum(
-            [a_st * i for i in (y_lst[3:9])])) + qb1t + qb2t
+            [a_st * i for i in (y_lst[3:9])])) + qb1t + qb2t + \
+               (-Sz / i_yy) * (integrate(0, incl, 100, lambda x: (-h - ((c_a - h) / incl) * x - zc) * t_sk) + sum(
+            [a_st * (i - zc) for i in (z_lst[3:9])]))
         qb4t = (-Sy / i_zz) * (integrate(0, incl, 100, lambda x: (- (h / incl) * x) * t_sk) + sum(
-            [a_st * i for i in (y_lst[9:15])])) + qb3t
-        qb5t = (-Sy / i_zz) * (integrate(0, -h, 100, lambda x: t_sp * x))
-        qb6t = (-Sy / i_zz) * (integrate(-0.5 * np.pi, 0, 100, lambda x: h ** 2 * t_sk * np.sin(x)) + sum(
-            [a_st * i for i in (y_lst[15:17])])) + qb4t - qb5t
+            [a_st * i for i in (y_lst[9:15])])) + qb3t + \
+               (-Sz / i_yy) * (integrate(0, incl, 100, lambda x: (-c_a + ((c_a - h) / incl) * x - zc) * t_sk) + sum(
+            [a_st * (i - zc) for i in (z_lst[9:15])]))
+        qb5t = (-Sy / i_zz) * (integrate(0, -h, 100, lambda x: t_sp * x)) + (-Sz / i_yy) * (
+            integrate(0, -h, 100, lambda x: t_sp * (-h - zc)))
+
         h_seg = b / ((len(segment) * n) - 1)
 
         ds = 0
@@ -185,35 +196,54 @@ class CrossSection:
                 # upper part semi circle
                 if segment <= 2:
                     qb = (-Sy / i_zz) * (integrate(0, b, 100, lambda x: h ** 2 * t_sk * np.sin(x)) + sum(
-                        [a_st * i for i in (y_lst[0:segment + 1])]))
+                        [a_st * i for i in (y_lst[0:segment + 1])])) + \
+                         (-Sz / i_yy) * (integrate(0, b, 100, lambda x: (h - h * np.cos(x) - zc) * h * t_sk) + sum(
+                        [a_st * (i - zc) for i in (z_lst[0:segment + 1])]))
                 # upper spar part
                 elif segment == 3:
-                    qb = (-Sy / i_zz) * (integrate(0, b, 100, lambda x: t_sp * x))
+                    qb = (-Sy / i_zz) * (integrate(0, b, 100, lambda x: t_sp * x)) + (-Sz / i_yy) * (
+                        integrate(0, b, 100, lambda x: t_sp * (-h - zc)))
                 # upper triangular part
                 elif 4 <= segment <= 10:
                     if segment == 4:
-                        qb = (-Sy / i_zz) * (integrate(0, b, 100, lambda x: (h - (h / incl) * x) * t_sk)) + qb1t + qb2t
+                        qb = (-Sy / i_zz) * (integrate(0, b, 100, lambda x: (h - (h / incl) * x) * t_sk)) + qb1t + qb2t + \
+                             (-Sz / i_yy) * (integrate(0, b, 100, lambda x: ((-h - ((c_a - h) / incl) * x) - zc) * t_sk))
                     else:
                         qb = (-Sy / i_zz) * (integrate(0, b, 100, lambda x: (h - (h / incl) * x) * t_sk) + sum(
-                            [a_st * i for i in (y_lst[3:segment - 1])])) + qb1t + qb2t
+                            [a_st * i for i in (y_lst[3:segment - 1])])) + qb1t + qb2t + \
+                             (-Sz / i_yy) * (integrate(0, b, 100,
+                                                      lambda x: ((-h - ((c_a - h) / incl) * x) - zc) * t_sk) + sum(
+                            [a_st * (i - zc) for i in (z_lst[3:segment - 1])]))
                 # lower triangular part
                 elif 11 <= segment <= 17:
                     if segment == 11:
-                        qb = (-Sy / i_zz) * (integrate(0, b, 100, lambda x: - (h / incl) * x * t_sk)) + qb3t
+                        qb = (-Sy / i_zz) * (integrate(0, b, 100, lambda x: - (h / incl) * x * t_sk)) + qb3t + \
+                             (-Sz / i_yy) * (
+                                 integrate(0, b, 100, lambda x: ((-c_a + ((c_a - h) / incl) * x) - zc) * t_sk))
                     else:
                         qb = (-Sy / i_zz) * (integrate(0, b, 100, lambda x: - (h / incl) * x * t_sk) + sum(
-                            [a_st * i for i in (y_lst[9:segment - 2])])) + qb3t
+                            [a_st * i for i in (y_lst[9:segment - 2])])) + qb3t + \
+                             (-Sz / i_yy) * (integrate(0, b, 100,
+                                                      lambda x: ((-c_a + ((c_a - h) / incl) * x) - zc) * t_sk) + sum(
+                            [a_st * (i - zc) for i in (z_lst[9:segment - 2])]))
                 # lower spar part
                 elif segment == 18:
-                    qb = (-Sy / i_zz) * (integrate(0, -b, 100, lambda x: t_sk * x))
+                    qb = (-Sy / i_zz) * (integrate(0, -b, 100, lambda x: t_sp * x)) + (-Sz / i_yy) * (
+                        integrate(0, -b, 100, lambda x: t_sp * (-h - zc)))
                 # lower part semi circle
                 else:
+                    b = -0.5 * np.pi + b
                     if segment == 19:
                         qb = (-Sy / i_zz) * (
-                            integrate(-0.5 * np.pi, b, 100, lambda x: h ** 2 * t_sk * np.sin(x))) + qb4t - qb5t
+                            integrate(-0.5 * np.pi, b, 100, lambda x: h ** 2 * t_sk * np.sin(x))) + qb4t - qb5t + \
+                             (-Sz / i_yy) * (
+                                 integrate(-0.5 * np.pi, b, 100, lambda x: ((h - h * np.cos(x)) - zc) * h * t_sk))
                     else:
                         qb = (-Sy / i_zz) * (integrate(-0.5 * np.pi, b, 100, lambda x: h ** 2 * t_sk * np.sin(x)) + sum(
-                            [a_st * i for i in (y_lst[15:segment - 4])])) + qb4t - qb5t
+                            [a_st * i for i in (y_lst[15:segment - 4])])) + qb4t - qb5t + \
+                             (-Sz / i_yy) * (integrate(-0.5 * np.pi, b, 100,
+                                                      lambda x: ((h - h * np.cos(x)) - zc) * h * t_sk) + sum(
+                            [a_st * (i - zc) for i in (z_lst[15:segment - 4])]))
                 qbl.append(qb)
             ds += n
 
@@ -227,6 +257,7 @@ class CrossSection:
         h = self.input['h'][self.aircraft]
         t_sp = self.input['tsp'][self.aircraft]
         incl = self.get_incl()
+        n1 = self.input['n_points'][self.aircraft]
 
         # define functions
         def second_integration(z_lst, q_lst):
@@ -239,9 +270,11 @@ class CrossSection:
             return A
 
         def second_int(zlist, qblist):
+            A = 0
+
             for i, j in zip(zlist, qblist):
-                A = 0
                 A += second_integration(i, j)
+
             return A
 
         def add_constant_shearflow(qb1, qb2, qb3, qb4, qb5, qb6, qs01, qs02):
@@ -253,13 +286,15 @@ class CrossSection:
             qb3 = [i + qs02 for i in qb3]
             return qb1, qb2, qb3, qb4, qb5, qb6
 
-        # insert segment, b, Sy and n
-        qb1 = self.get_shear_flow([0, 1, 2], 0.5 * np.pi, 1, 20)
-        qb2 = self.get_shear_flow([3], h, 1, 40)
-        qb3 = self.get_shear_flow([4, 5, 6, 7, 8, 9, 10], incl, 1, 20)
-        qb4 = qb3[::-1]
-        qb5 = qb2
-        qb6 = qb1[::-1]
+        # insert segment, b, Sy, Sz and n
+        Sy = 1
+        Sz = 1
+        qb1 = self.get_shear_flow([0, 1, 2], 0.5 * np.pi, Sy, Sz, n1)
+        qb2 = self.get_shear_flow([3], h, Sy, Sz, 2 * n1)
+        qb3 = self.get_shear_flow([4, 5, 6, 7, 8, 9, 10], incl, Sy, Sz, n1)
+        qb4 = self.get_shear_flow([11, 12, 13, 14, 15, 16, 17], incl, Sy, Sz, n1)
+        qb5 = self.get_shear_flow([18], h, Sy, Sz, 2 * n1)
+        qb6 = self.get_shear_flow([19, 20, 21], 0.5 * np.pi, Sy, Sz, n1)
 
         # points along line of integration (s)
         s_co1 = np.linspace(0, np.pi * h / 2, 60)
@@ -292,7 +327,7 @@ class CrossSection:
 
         shear_lst = [qb1, qb2, qb3, qb4, qb5, qb6]
 
-        m_2 = ((c_a - h) / incl) * h * -second_integration(s_co3, qb3) + ((c_a - h) / incl) * h * second_integration(s_co4, qb4) + 2 * h * second_integration(s_co1, qb1)
+        m_2 = ((c_a-h) / incl)*h*second_integration(s_co3, qb3) + ((c_a-h) / incl)*h*second_integration(s_co4, qb4) + 2*h*second_integration(s_co1, qb1)
 
         shear_center = - h - m_2
 
