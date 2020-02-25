@@ -9,9 +9,9 @@ from src.input.input import Input
 def get_discrete_load(x, cont_load, step):
     """ Given a continous load function q(x), this will make an array of the load at different
     locations with a set interval. For the trapezoidal rule"""
-    discrete_load = np.empty_like(np.arange(0, x, step))
-    for i in np.arange(0, x, step):
-        discrete_load[int(i/step)] = cont_load.get_q(-i)
+    discrete_load = np.empty_like(np.arange(0, x+step, step))
+    for i in np.arange(0, x+step, step):
+        discrete_load[int(round(i/step))] = cont_load.get_q(-i)
     return discrete_load
 
 
@@ -19,7 +19,7 @@ def trapezoidal_rule(row, step):
     """ Just trapezoidal rule between set of points"""
     resultant = 0
     for i in range(len(row)-1):
-        r_i = (row[i] + row[i+1])*step*0.5
+        r_i = (row[i-1] + row[i])*step*0.5
         resultant += r_i
     return resultant
 
@@ -35,7 +35,8 @@ def location_resultant(x, cont_load, step):
             xbar  = integral(x*q(x))/integral(q(x)) """
     discrete_load = get_discrete_load(x, cont_load, step)
     resultant = magnitude_resultant(x, cont_load, step)
-    discrete_load_x = discrete_load*np.arange(0, x, step)
+    discrete_load_x = discrete_load*np.arange(0, x+step, step)
+
     return trapezoidal_rule(discrete_load_x, step)/resultant
 
 
@@ -45,24 +46,24 @@ def moment_resultant(x, cont_load, step):
     location = location_resultant(x, cont_load, step)
     return resultant*(location-x)
 
-# --------------------------------------------------------------------------------------------
 
 def angle_distributed(x, cont_load, step):
-    discrete_moment = np.empty_like(np.arange(0, x, step))
-    for i in np.arange(0, x, step):
-        discrete_moment[int(i/step)] = moment_resultant(i, cont_load, step)
+    discrete_moment = np.zeros(np.linspace(0, x, int(round((x+step)/step, int(-np.log10(step))))).shape)
+    for i in np.linspace(0, x, int(round((x+step)/step, int(-np.log10(step))))):
+        if i > 0:
+            discrete_moment[int(round(i/step))-1] = moment_resultant(i, cont_load, step)
     return trapezoidal_rule(discrete_moment, step)
 
 
 def deflection_distributed(x, cont_load, step):
-    discrete_angle = np.empty_like(np.arange(0, x, step))
-    for i in np.arange(0, x, step):
-        discrete_angle[int(i/step)] = angle_distributed(i, cont_load, step)
+    discrete_angle = np.zeros(np.linspace(0, x, int(round((x+step)/step, int(-np.log10(step))))).shape)
+    for i in np.linspace(0, x, int(round((x+step)/step, int(-np.log10(step))))):
+        discrete_angle[int(round(i/step))-1] = angle_distributed(i, cont_load, step)
     return trapezoidal_rule(discrete_angle, step)
 
 
 # ===============================================================================
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     # inputs

@@ -7,17 +7,25 @@ from src.input.general.discrete_input import input_dict
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from src.loads.torque import Torque
+from src.loads.moment import Moment
 
 
 
 class ShearStress:
 
-    def __init__(self):
+    def __init__(self, steps):
         self.input = input_dict
-        self.aircraft = 'A'
+        self.aircraft = 'B'
         self.q_1 = CrossSection(input_dict, self.aircraft).twist_of_aileron([1], self.input['G'][self.aircraft])[0]
         self.q_2 = CrossSection(input_dict, self.aircraft).twist_of_aileron([1], self.input['G'][self.aircraft])[1]
         self.q_lst = CrossSection(input_dict, self.aircraft).get_shear_center()[1]
+        self.n_points = self.input['n_points'][self.aircraft]
+        self.x_location = np.linspace(0, self.input["la"][self.aircraft], steps)
+        self.T = [Torque(self.aircraft).T(i) for i in self.x_location]
+        self.My = [Moment(self.aircraft).M_y(i) for i in self.x_location]
+        self.Mz = [Moment(self.aircraft).M_z(i) for i in self.x_location]
 
     def shear_stress_due_to_shear(self):  # compute shear stress in skins and spar by dividing by thickness, note spar shear flow not included in shear_flow_lst
         # Shear stress distribution per section due to Sy and Sz computed at the middle of each section
@@ -42,7 +50,7 @@ class ShearStress:
         After computing twist rate, take distance from hinge line to shear center to compute the deflection of the hinge line"""
 
         # input
-        T_lst = [-2, -1, -3] # TODO: CHANGE THIS
+        T_lst = self.T
         t_sk = self.input['tsk'][self.aircraft]
         t_sp = self.input['tsp'][self.aircraft]
         l_a = self.input['la'][self.aircraft]
@@ -174,19 +182,25 @@ class ShearStress:
         yco1, zco1, yco2, zco2, yco3, zco3, yco4, zco4, yco5, zco5, yco6, zco6 = self.z_location()
         Iyy = CrossSection(self.input, self.aircraft).get_moments_inertia()[2]
         zc = CrossSection(self.input, self.aircraft).get_centroid()[1]
-        Mz, My = [1, 1] # TODO: CHANGE THIS ONE
+        My = self.My
+        Mz = self.Mz
 
-        """Computes the Direct stress distrubtion along the cross-section at each point where the shear flow is calculated based on the Mx and My of a specific location along the span"""
-        sigma_xx_1 = [My * (zco1[i] - zc) / Iyy + Mz * yco1[i] for i in range(len(
-            zco1))]  # zc is zlocation of centroid, compute y- and z-location of the middle of each section where the shear flow is computed
-        sigma_xx_2 = [My * (zco2[i] - zc) / Iyy + Mz * yco2[i] for i in range(len(zco2))]
-        sigma_xx_3 = [My * (zco3[i] - zc) / Iyy + Mz * yco3[i] for i in range(len(zco3))]
-        sigma_xx_4 = [My * (zco4[i] - zc) / Iyy + Mz * yco4[i] for i in range(len(zco4))]
-        sigma_xx_5 = [My * (zco5[i] - zc) / Iyy + Mz * yco5[i] for i in range(len(zco5))]
-        sigma_xx_6 = [My * (zco6[i] - zc) / Iyy + Mz * yco6[i] for i in range(len(zco6))]
-        sigma_xx_1.extend(
-            sigma_xx_2 + sigma_xx_3 + sigma_xx_4 + sigma_xx_5 + sigma_xx_6)  # combine all section to get distribution in one list
-        return list(sigma_xx_1)
+        direct_stress_per_x = []
+
+        for j in range(self.n_points):
+
+            """Computes the Direct stress distrubtion along the cross-section at each point where the shear flow is calculated based on the Mx and My of a specific location along the span"""
+            sigma_xx_1 = [My * (zco1[i] - zc) / Iyy + Mz * yco1[i] for i in range(len(zco1))]
+            sigma_xx_2 = [My * (zco2[i] - zc) / Iyy + Mz * yco2[i] for i in range(len(zco2))]
+            sigma_xx_3 = [My * (zco3[i] - zc) / Iyy + Mz * yco3[i] for i in range(len(zco3))]
+            sigma_xx_4 = [My * (zco4[i] - zc) / Iyy + Mz * yco4[i] for i in range(len(zco4))]
+            sigma_xx_5 = [My * (zco5[i] - zc) / Iyy + Mz * yco5[i] for i in range(len(zco5))]
+            sigma_xx_6 = [My * (zco6[i] - zc) / Iyy + Mz * yco6[i] for i in range(len(zco6))]
+
+            direct_stress_per_x.append(sigma_xx_1 + sigma_xx_2 + sigma_xx_3 + sigma_xx_4 + sigma_xx_5 + sigma_xx_6)
+
+
+        return direct_stress_per_x
 
     def von_mises_stress_distribution(self):  # use total shear stresses!
         """This function calculates the Von Mises stress distrubtion for every x-location taken
@@ -195,13 +209,11 @@ class ShearStress:
         # input
         direct_stress_distribution = self.direct_stress_distribution()
         shear_stress_distribution = self.total_shear_stress()
-        T_lst = [-2, -1, -3]  # TODO: CHANGE THIS
-        n = len(T_lst)  # TODO: This should be changed to the variable that defines the number of points taken where the loads are discretised along the span including begin and end points, in my program it matches the size of the torque list but that also changes according to the number of points along x chosen
+        T_lst = self.T  # TODO: CHANGE THIS
         sigma_vm_distribution_at_every_x_loc = []
 
-        for j in range(n):
-            sigma_vm = [np.sqrt(direct_stress_distribution[i] ** 2 + 3 * shear_stress_distribution[n - 1][i] ** 2) for i
-                        in range(len(direct_stress_distribution))]
+        for j in range(self.n_points):
+            sigma_vm = [np.sqrt(direct_stress_distribution[j-1][i] ** 2 + 3 * shear_stress_distribution[j-1][i] ** 2) for i in range(len(direct_stress_distribution[0]))]
             sigma_vm_distribution_at_every_x_loc.append(sigma_vm)
 
         return sigma_vm_distribution_at_every_x_loc  # example sigma_vm_distribution[0] is the distribution at the first x-location taken along the span
@@ -209,15 +221,14 @@ class ShearStress:
     def plot_shear_2d(self, x):
 
         yco1, zco1, yco2, zco2, yco3, zco3, yco4, zco4, yco5, zco5, yco6, zco6 = self.z_location()
-        von_mises_stress_distribution_at_every_x_loc = self.von_mises_stress_distribution()
+        von_mises = np.array(self.von_mises_stress_distribution())
 
         for i, j in zip([yco2, yco3, yco4, yco5, yco6], [zco2, zco3, zco4, zco5, zco6]):
 
             yco1.extend(i)
             zco1.extend(j)
 
-        x = 2  # distribution calculated at first point
-        plt.scatter(zco1, yco1, c=von_mises_stress_distribution_at_every_x_loc[x], cmap='jet')
+        plt.scatter(zco1, yco1, c=von_mises[x, :, x], cmap='jet')
         plt.xlabel('z[m]', fontsize=16)
         plt.ylabel('y[m]', fontsize=16)
         # plt.legend()
@@ -232,22 +243,28 @@ class ShearStress:
     def plot_shear_3d(self):
 
         yco1, zco1, yco2, zco2, yco3, zco3, yco4, zco4, yco5, zco5, yco6, zco6 = self.z_location()
-        von_mises_stress_distribution_at_every_x_loc = self.von_mises_stress_distribution()
+        von_mis = np.array(self.von_mises_stress_distribution())
+
+        l_a = self.input['la'][self.aircraft]
+        x_axis = np.linspace(0, l_a, len(von_mis))
 
         for i, j in zip([yco2, yco3, yco4, yco5, yco6], [zco2, zco3, zco4, zco5, zco6]):
 
             yco1.extend(i)
             zco1.extend(j)
 
-        
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
 
+        for i in range(len(von_mis)):
+            ax.scatter(zco1, yco1, x_axis[i], c=von_mis[i, :, i], cmap='jet')
 
-
-
+        plt.show()
+        return 0
 
 # debugging ========================================
 DEBUG = True
 
 if DEBUG:
-    shear = ShearStress().plot_shear_2d(2)
+    shear = ShearStress(2).plot_shear_3d()
 

@@ -6,6 +6,8 @@ Title: The script is based on the input dictionary values and the distributed lo
 import numpy as np
 from src.input.input import input_dict
 from src.input.cross_section.cross_section import CrossSection
+from src.loads.distributed_load import *
+from src.input.aero_load.aero_load import AeroLoad
 
 
 class PointLoads:
@@ -14,6 +16,7 @@ class PointLoads:
 
         self.aircraft = aircraft
         self.input = input_dict
+        self.step = 0.1
 
     def get_discrete_input(self):
 
@@ -40,7 +43,8 @@ class PointLoads:
         # loads due to aerodynamic forces
 
         # forces
-        q = 1  # resultant aeroforce
+        aero = AeroLoad(self.aircraft)
+        q = 1 # resultant aeroforce
         Mqz = 1  # moment due to aero force
         Tq = 1  # torque due to aero force (can be set 0 if we make assumption)
         qq = 1  # double integral of aero moment for deflection
@@ -72,13 +76,27 @@ class PointLoads:
         x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la = self.get_discrete_input()
         q, Mqz, Tq, qq, qqt = self.get_distributed_loads_aero()
         dsch, dsca_y, dsca_z, Izz, Iyy, J, z = self.get_geometry()
+        step = self.step
+
+        # forces
+        q = AeroLoad(self.aircraft)
+        Q_l = magnitude_resultant(la, q, step)  # aero force at la
+        # moments
+        Mqz_l = moment_resultant(la, q, step)  # aero moment at la
+
+        # deflections
+        ddq_x2 = deflection_distributed(x2, q, step)
+        ddq_xa2 = deflection_distributed(xa2, q, step)
+        ddq_x1 = deflection_distributed(x1, q, step)
+        ddq_x3 = deflection_distributed(x3, q, step)
 
         # function
         cte_v = -1 / (E * Izz)  # cte in v deflection formula
         cte_w = -1 / (E * Iyy)  # cte in w deflection formula
         cte_T = 1 / (G * J)  # cte in torsion equation
-
         # order variables matrix
+        # F_z1 , F_z2, F_z3, F_a, F_y1, F_y2, F_y3, c1, c2, c3, c4, c5
+
         left_column = np.array([
             [la - x1, la - x2, la - x3, np.cos(theta) * (la - xa1), 0, 0, 0, 0, 0, 0, 0, 0],
             # Moment around y equation at la
@@ -86,44 +104,44 @@ class PointLoads:
             # Moment around z equation at la
             [-dsch, dsch, -dsch, dsca_y * np.cos(theta) + dsca_z * np.sin(theta), 0, 0, 0, 0, 0, 0, 0, 0],
             # Torque aka Moment around x at la
-            [1, 1, 1, np.sin(theta), 0, 0, 0, 0, 0, 0, 0, 0],  # force/shear z
-            [0, 0, 0, np.cos(theta), 1, 1, 1, 0, 0, 0, 0, 0],  # force/shear y
-            [0, 0, 0, cte_v / 6 * np.sin(theta) * (x2 - xa1) ** 3, cte_v / 6 * (x2 - x1) ** 3, 0, 0, x2, 1, 0, 0,
-             0],  # v deflection at x2
+            [1, 1, 1, np.cos(theta), 0, 0, 0, 0, 0, 0, 0, 0],  # force/shear z
+            [0, 0, 0, np.sin(theta), 1, 1, 1, 0, 0, 0, 0, 0],  # force/shear y
+            [0, 0, 0, cte_v / 6 * np.sin(theta) * (x2 - xa1) ** 3, cte_v / 6 * (x2 - x1) ** 3, 0, 0, x2, 1, 0, 0, 0],
+            # v deflection at x2
             [0, 0, 0, cte_v / 6 * np.sin(theta) * (xa2 - xa1) ** 3, cte_v / 6 * (xa2 - x1) ** 3,
              cte_v / 6 * (xa2 - x2) ** 3, 0, xa2, 1, 0, 0, 0],  # v deflection at xa2
-            [cte_w / 6 * (x2 - x1) ** 3, 0, 0, cte_w / 6 * np.cos(theta) * (x2 - xa1) ** 3, 0, 0, 0, 0, 0, x2, 1,
-             0],  # w deflection at x2
+            [cte_w / 6 * (x2 - x1) ** 3, 0, 0, cte_w / 6 * np.cos(theta) * (x2 - xa1) ** 3, 0, 0, 0, 0, 0, x2, 1, 0],
+            # w deflection at x2
             [0, 0, 0, 0, 0, 0, 0, x1, 1, 0, 0, (z - x1)],  # v + theta(z-x) deflection at x1
             [-cte_T * dsch * (x3 - x1) * (z - x3), cte_T * dsch * (x3 - x2) * (z - x3), 0,
-             cte_v / 6 * np.cos(theta) * (x3 - xa1) ** 3 + cte_T * (
-                         dsca_y * np.cos(theta) + dsca_z * np.sin(theta)) * (z - x3),
+             cte_v / 6 * np.sin(theta) * (x3 - xa1) ** 3 + cte_T * (dsca_y * np.cos(theta) + dsca_z * np.sin(theta)) * (
+                         z - x3),
              cte_v / 6 * (x3 - x1) ** 3, cte_v / 6 * (x3 - x2) ** 3, 0, x3, 1, 0, 0, (z - x3)],
             # v + theta(z-x) deflection at x3
             [0, 0, 0, 0, 0, 0, 0, 0, 0, x1, 1, (z - x1)],  # w + theta(z-x) deflection at x1
             [cte_w / 6 * (x3 - x1) ** 3 - cte_T * dsch * (x3 - x1) * (z - x3),
              cte_w / 6 * (x3 - x2) ** 3 + cte_T * dsch * (x3 - x2) * (z - x3), 0,
-             cte_v / 6 * np.sin(theta) * (x3 - xa1) ** 3 + cte_T * (
-                         dsca_y * np.cos(theta) + dsca_z * np.sin(theta)) * (z - x3),
+             cte_v / 6 * np.cos(theta) * (x3 - xa1) ** 3 + cte_T * (dsca_y * np.cos(theta) + dsca_z * np.sin(theta)) * (
+                         z - x3),
              0, 0, 0, 0, 0, x3, 1, (z - x3)]  # w + theta(z-x) deflection at x3
         ])
 
         right_column = np.array([
             [P * np.cos(theta) * (la - xa2)],  # Moment around y equation at la
-            [P * np.sin(theta) * (la - xa2) + Mqz],  # Moment around z equation at la
-            [P * (dsca_y * np.cos(theta) + dsca_z * np.sin(theta)) + Tq],  # Torque aka Moment around x at la
+            [P * np.sin(theta) * (la - xa2) + Mqz_l],  # Moment around z equation at la
+            [P * (dsca_y * np.cos(theta) + dsca_z * np.sin(theta))],  # Torque aka Moment around x at la
             [P * np.cos(theta)],  # force/shear z
-            [P * np.sin(theta) + q],  # force/shear y
-            [cte_v * qq],  # v deflection at x2 qq at x2
-            [cte_v * qq],  # v deflection at xa2  qq at x2
+            [P * np.sin(theta) + Q_l],  # force/shear y
+            [cte_v * ddq_x2],  # v deflection at x2 qq at x2
+            [cte_v * ddq_xa2],  # v deflection at xa2  qq at x2
             [0],  # w deflection at x2
-            [d1 * np.sin(theta) + cte_v * qq + cte_T * qqt * (z - x1)],  # v deflection at x1  qq at x1
-            [d3 * np.sin(theta) + cte_v * (1 / 6 * P * np.sin(theta) * (x3 - xa2) ** 3 + qq)
-             + (cte_T * (P * (dsca_y * np.cos(theta) + dsca_z * np.sin(theta)) * (x3 - x1) + qqt)) * (z - x3)],
+            [d1 * np.sin(theta) + cte_v * ddq_x1],  # v deflection at x1  qq at x1
+            [d3 * np.sin(theta) + cte_v * (1 / 6 * P * np.sin(theta) * (x3 - xa2) ** 3 + ddq_x3)
+             + (cte_T * (P * (dsca_y * np.cos(theta) + dsca_z * np.sin(theta)) * (x3 - x1))) * (z - x3)],
             # v deflection at x3 qqt qq at x3
-            [d1 * np.cos(theta) + cte_T * qqt * (z - x1)],  # w deflection at x1
+            [d1 * np.cos(theta)],  # w deflection at x1
             [d3 * np.cos(theta) + cte_w / 6 * P * np.cos(theta) * (x3 - xa2) ** 3
-             + (cte_T * (P * (dsca_y * np.cos(theta) + dsca_z * np.sin(theta)) * (x3 - x1) + qqt)) * (z - x3)]
+             + (cte_T * (P * (dsca_y * np.cos(theta) + dsca_z * np.sin(theta)) * (x3 - x1))) * (z - x3)]
             # w deflection at x3
         ])
 

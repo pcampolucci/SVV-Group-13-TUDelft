@@ -11,8 +11,8 @@ class Moment:
         self.discrete_input = PointLoads(self.aircraft).get_discrete_input()
         self.geometry_input = PointLoads(self.aircraft).get_geometry()
         self.point_loads = PointLoads(self.aircraft).get_discrete_loads()
-        self.aero_load = Input.aero_input(self.aircraft)
-        self.step = 10
+        self.aero_load = Input(self.aircraft).aero_input()
+        self.step = 0.1
 
     def M_y(self, x):
 
