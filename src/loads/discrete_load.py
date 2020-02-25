@@ -8,15 +8,16 @@ from src.input.input import input_dict
 from src.input.cross_section.cross_section import CrossSection
 from src.loads.distributed_load import *
 from src.input.aero_load.aero_load import AeroLoad
+import tqdm as tqdm
 
 
 class PointLoads:
 
-    def __init__(self, aircraft):
+    def __init__(self, aircraft, steps):
 
         self.aircraft = aircraft
         self.input = input_dict
-        self.step = 0.1
+        self.step = steps
 
     def get_discrete_input(self):
 

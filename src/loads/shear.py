@@ -4,15 +4,16 @@ from src.loads.distributed_load import moment_resultant, magnitude_resultant
 from src.loads.discrete_load import PointLoads
 from src.input.input import input_dict
 
+
 class Shear:
 
-    def __init__(self, aircraft):
+    def __init__(self, aircraft, steps):
         self.aircraft = aircraft
-        self.discrete_input = PointLoads(self.aircraft).get_discrete_input()
-        self.geometry_input = PointLoads(self.aircraft).get_geometry()
-        self.point_loads = PointLoads(self.aircraft).get_discrete_loads()
-        self.aero_load = Input.aero_input(self.aircraft)
-        self.step = 10
+        self.discrete_input = PointLoads(self.aircraft, steps).get_discrete_input()
+        self.geometry_input = PointLoads(self.aircraft, steps).get_geometry()
+        self.point_loads = PointLoads(self.aircraft, steps).get_discrete_loads()
+        self.aero_load = Input(self.aircraft).aero_input()
+        self.step = 0.1
 
     def V_y(self, x):
 

@@ -17,7 +17,9 @@ Author: Pietro Campolucci
 # importing from directory
 from src.input.input import Input
 #from src.loads.toolkit import Loads
-
+from src.combine.max_stress import ShearStress
+from src.combine.twist import Twist
+from src.combine.deflection import Deflection
 
 class Combine():
     """ combine class called for different scenarios """
@@ -41,7 +43,10 @@ class Combine():
         return print("not yet implemented")
 
     def get_max_stress_report(self):
-        # TODO: given the input based on aircraft type, use the Loads toolkit to give results
-        return print("not yet implemented")
+        print("Plotting VonMises Stress Distribution ...")
+        steps = 10
+        stress_init = ShearStress(self.a, steps)
+        stress_init.plot_shear_3d()
+
 
 

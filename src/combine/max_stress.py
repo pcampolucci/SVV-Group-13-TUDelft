@@ -10,22 +10,22 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from src.loads.torque import Torque
 from src.loads.moment import Moment
-
+from tqdm import tqdm
 
 
 class ShearStress:
 
-    def __init__(self, steps):
+    def __init__(self, aircraft, steps):
         self.input = input_dict
-        self.aircraft = 'B'
+        self.aircraft = aircraft
         self.q_1 = CrossSection(input_dict, self.aircraft).twist_of_aileron([1], self.input['G'][self.aircraft])[0]
         self.q_2 = CrossSection(input_dict, self.aircraft).twist_of_aileron([1], self.input['G'][self.aircraft])[1]
         self.q_lst = CrossSection(input_dict, self.aircraft).get_shear_center()[1]
-        self.n_points = self.input['n_points'][self.aircraft]
-        self.x_location = np.linspace(0, self.input["la"][self.aircraft], steps)
-        self.T = [Torque(self.aircraft).T(i) for i in self.x_location]
-        self.My = [Moment(self.aircraft).M_y(i) for i in self.x_location]
-        self.Mz = [Moment(self.aircraft).M_z(i) for i in self.x_location]
+        self.x_location = np.linspace(0.0001, self.input["la"][self.aircraft], steps)
+        self.n_points = steps
+        self.T = [float(Torque(self.aircraft, steps).T(i)) for i in tqdm(self.x_location, desc="Torque")]
+        self.My = [float(Moment(self.aircraft, steps).M_y(i)) for i in tqdm(self.x_location, desc="Moment Y")]
+        self.Mz = [float(Moment(self.aircraft, steps).M_z(i)) for i in tqdm(self.x_location, desc="Moment X")]
 
     def shear_stress_due_to_shear(self):  # compute shear stress in skins and spar by dividing by thickness, note spar shear flow not included in shear_flow_lst
         # Shear stress distribution per section due to Sy and Sz computed at the middle of each section
@@ -72,7 +72,7 @@ class ShearStress:
         x_theta_0 = l_a / 2  # due to assumption around x, x_sc in middle [m]
         theta_0 = 0  # this is a boundary condition [rad]
 
-        for i in range(len(T_lst)):
+        for i in tqdm(range(len(T_lst)), desc="twist of aileron"):
             w = np.array([T_lst[i], 0, 0])
             solution = np.linalg.solve(B, w)
             q1 = solution[0]
@@ -182,15 +182,16 @@ class ShearStress:
         yco1, zco1, yco2, zco2, yco3, zco3, yco4, zco4, yco5, zco5, yco6, zco6 = self.z_location()
         Iyy = CrossSection(self.input, self.aircraft).get_moments_inertia()[2]
         zc = CrossSection(self.input, self.aircraft).get_centroid()[1]
-        My = self.My
-        Mz = self.Mz
+        My = np.array(self.My)
+        Mz = np.array(self.Mz)
 
         direct_stress_per_x = []
 
         for j in range(self.n_points):
 
             """Computes the Direct stress distrubtion along the cross-section at each point where the shear flow is calculated based on the Mx and My of a specific location along the span"""
-            sigma_xx_1 = [My * (zco1[i] - zc) / Iyy + Mz * yco1[i] for i in range(len(zco1))]
+
+            sigma_xx_1 = [My * (zco1[i] - zc) / Iyy + Mz * yco1[i] for i in tqdm(range(len(zco1)), desc="direct stress distribution")]
             sigma_xx_2 = [My * (zco2[i] - zc) / Iyy + Mz * yco2[i] for i in range(len(zco2))]
             sigma_xx_3 = [My * (zco3[i] - zc) / Iyy + Mz * yco3[i] for i in range(len(zco3))]
             sigma_xx_4 = [My * (zco4[i] - zc) / Iyy + Mz * yco4[i] for i in range(len(zco4))]
@@ -235,7 +236,6 @@ class ShearStress:
         c = plt.colorbar()
         c.set_label('Von Mises Stress [N/m^2]')
         plt.title('Von Mises Stress Distribution')
-        # plt.savefig("flow.png")
         plt.show()
 
         return 0
@@ -257,7 +257,14 @@ class ShearStress:
         ax = fig.add_subplot(111, projection='3d')
 
         for i in range(len(von_mis)):
-            ax.scatter(zco1, yco1, x_axis[i], c=von_mis[i, :, i], cmap='jet')
+            p = ax.scatter(zco1, yco1, x_axis[i], c=von_mis[i, :, i], cmap='jet')
+
+        c = fig.colorbar(p)
+        c.set_label('Von Mises Stress [N/m^2]')
+        ax.set_xlabel('Y [m]')
+        ax.set_ylabel('Z [m]')
+        ax.set_zlabel('Aileron Span [m]')
+        plt.title('Von Mises Stress Distribution')
 
         plt.show()
         return 0
@@ -266,5 +273,6 @@ class ShearStress:
 DEBUG = True
 
 if DEBUG:
-    shear = ShearStress(2).plot_shear_3d()
+    shear = ShearStress('B', 20)
+    shear.plot_shear_3d()
 
