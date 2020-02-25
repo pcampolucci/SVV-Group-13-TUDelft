@@ -23,9 +23,10 @@ class ShearStress:
         self.q_lst = CrossSection(input_dict, self.aircraft).get_shear_center()[1]
         self.x_location = np.linspace(0.0001, self.input["la"][self.aircraft], steps)
         self.n_points = steps
-        self.T = [float(Torque(self.aircraft, steps).T(i)) for i in tqdm(self.x_location, desc="Torque")]
-        self.My = [float(Moment(self.aircraft, steps).M_y(i)) for i in tqdm(self.x_location, desc="Moment Y")]
-        self.Mz = [float(Moment(self.aircraft, steps).M_z(i)) for i in tqdm(self.x_location, desc="Moment X")]
+        self.T = [660.44862356,  359.64170576,  278.01919764, - 252.7818348,  3979.4813368, - 186.49317495,  100.51646629, - 276.95420611, - 314.78817203, - 839.02635342]#[float(Torque(self.aircraft, steps).T(i)) for i in tqdm(self.x_location, desc="Torque")]
+        self.My = [1279.48835396,  6219.7912426,  17825.58106292, 29427.9314608, 48893.12680388, 54825.33865843, 39017.58694589, 24526.26153543, 10348.0636794,   1101.02127179]# [float(Moment(self.aircraft, steps).M_y(i)) for i in tqdm(self.x_location, desc="Moment Y")]
+        self.Mz = [390.08069176, - 3988.5854398, - 11680.01329549, - 18662.70792584, - 21746.73532002, - 13060.85756981, - 10813.19731313, - 7099.87885604, - 2946.2971255,    743.22999279]# [float(Moment(self.aircraft, steps).M_z(i)) for i in tqdm(self.x_location, desc="Moment Z")]
+
 
     def shear_stress_due_to_shear(self):  # compute shear stress in skins and spar by dividing by thickness, note spar shear flow not included in shear_flow_lst
         # Shear stress distribution per section due to Sy and Sz computed at the middle of each section
@@ -273,6 +274,6 @@ class ShearStress:
 DEBUG = True
 
 if DEBUG:
-    shear = ShearStress('B', 20)
+    shear = ShearStress('A', 10)
     shear.plot_shear_3d()
 

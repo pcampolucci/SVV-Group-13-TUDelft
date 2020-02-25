@@ -18,7 +18,7 @@ class CrossSection:
         self.input = discrete_dict
         self.aircraft = aircraft
 
-    def stiffener_spacing(self):
+    def stiffener_spacing(self):  # OK
 
         # input required
         h = self.input['h'][self.aircraft]/2
@@ -28,13 +28,13 @@ class CrossSection:
 
         # function
         perimeter_semicircle = np.pi * h
-        perimeter_triangle = 2 * np.sqrt((c_a - h) * 2 + h * 2)
+        perimeter_triangle = 2 * np.sqrt((c_a - h) ** 2 + h ** 2)
         stiffener_spacing_semicircle = perimeter_semicircle / spacing_circle
         stiffener_spacing_triangle = perimeter_triangle / spacing_triangle
 
-        return stiffener_spacing_triangle, stiffener_spacing_semicircle, perimeter_semicircle, perimeter_triangle
+        return stiffener_spacing_triangle, stiffener_spacing_semicircle, perimeter_semicircle, perimeter_triangle  # [m]
 
-    def boom_locations(self):
+    def boom_locations(self):  # OK
 
         # input required
         h = self.input['h'][self.aircraft]/2
@@ -69,11 +69,11 @@ class CrossSection:
 
         return z_lst, y_lst
 
-    def stiffener_area(self):
+    def stiffener_area(self):  # OK
 
         # input required
         w = self.input['wst'][self.aircraft]
-        h = self.input['hst'][self.aircraft]/2
+        h = self.input['hst'][self.aircraft]
         t = self.input['tst'][self.aircraft]
 
         # function
@@ -81,29 +81,29 @@ class CrossSection:
 
         return area
 
-    def get_centroid(self):
+    def get_centroid(self):  # OK
 
         # input required
         c_a = self.input['Ca'][self.aircraft]
         t_sk = self.input['tsk'][self.aircraft]
+        t_sp = self.input['tsp'][self.aircraft]
         h = self.input['h'][self.aircraft]/2
         z_lst = self.boom_locations()[0]
         a_st = self.stiffener_area()
-        n_st = self.input['nst_circle'][self.aircraft] + self.input['nst_triangle'][self.aircraft]
+        n_st = self.input['nst_circle'][self.aircraft] +  self.input['nst_triangle'][self.aircraft]
 
         # function
         yc = 0
-        stiffener = sum([i * a_st for i in z_lst])
-        triangle = -2 * (h + (c_a - h) / 2) * np.sqrt((c_a - h) * 2 + h * 2) * t_sk
-        semicircle = -h * (1 - 2 / np.pi) * np.pi*(h * 2 - (h - t_sk) * 2) / 2
-        spar = -t_sk * h * 2 * h
+        stff = sum([i * a_st for i in z_lst])
+        triangle = -2 * (h + (c_a - h) / 2) * np.sqrt((c_a - h) ** 2 + h ** 2) * t_sk
+        semic = -h * (1 - 2 / np.pi) * np.pi * 2 * h * t_sk / 2
+        spar = -t_sp * h * 2 * h
 
-        zc = (stiffener + semicircle + triangle + spar) / (n_st * a_st + np.sqrt((c_a - h) * 2 + h * 2) * t_sk * 2 + np.pi*(
-            h * 2 - (h - t_sk) * 2) / 2 + t_sk * 2 * h)
-
+        zc = (stff + semic + triangle + spar) / (
+                    n_st * a_st + np.sqrt((c_a - h) ** 2 + h ** 2) * t_sk * 2 + np.pi * 2 * h * t_sk / 2 + t_sp * 2 * h)
         return yc, zc
 
-    def get_incl(self):
+    def get_incl(self):  # OK
 
         # get input
         c_a = self.input['Ca'][self.aircraft]
@@ -111,7 +111,7 @@ class CrossSection:
 
         return np.sqrt((c_a - h) ** 2 + h ** 2)
 
-    def get_moments_inertia(self):
+    def get_moments_inertia(self):  # OK
 
         # input information
         c_a = self.input['Ca'][self.aircraft]
@@ -124,27 +124,26 @@ class CrossSection:
         a_st = self.stiffener_area()
         yc = self.get_centroid()[0]
         zc = self.get_centroid()[1]
-        incl = self.get_incl()
 
-        stif_z = sum([(i - yc) ** 2 * a_st for i in y_lst])
-        triangle_z = ((2 * incl) ** 3 * t_sk / 12) * (h / incl) ** 2
+        incl = np.sqrt((c_a - h) ** 2 + h ** 2)
+
+        stff_z = sum([(i - yc) ** 2 * a_st for i in y_lst])
+        triangle_z = ((2 * incl) ** 3 * t_sk / 12) * ((h) / incl) ** 2
         spar_z = (2 * t_sp / 12) * (2 * h) ** 3
         semic_z = 0.5 * np.pi * h ** 3 * t_sk / 8
-
-        i_zz = stif_z + triangle_z + spar_z + semic_z
+        Izz = stff_z + triangle_z + spar_z + semic_z
 
         stff_y = sum([(i - zc) ** 2 * a_st for i in z_lst])
-        triangle_y = 2 / 12 * t_sk * incl ** 3 * ((c_a - h) / incl) ** 2 + 2 * incl * t_sk * (
+        triangle_y = 2 / 12 * t_sk * (incl) ** 3 * ((c_a - h) / incl) ** 2 + 2 * incl * t_sk * (
                     -h - (c_a - h) / 2 - zc) ** 2
-        spar_y = (2 * h / 12) * t_sk ** 3 + 2 * h * t_sp * (-h - zc) ** 2
+        spar_y = (2 * h / 12) * (t_sk) ** 3 + 2 * h * t_sp * (-h - zc) ** 2
         semic_y = h ** 3 * t_sk * (np.pi / 2 - 4 / np.pi) + np.pi * h * t_sk * ((-h + 2 * h / np.pi) - zc) ** 2
 
-        i_yy = stff_y + spar_y + semic_y + triangle_y
-        i_xx = 1 / 12 * l_a * c_a ** 3
+        Iyy = stff_y + spar_y + semic_y + triangle_y
 
-        return i_zz, i_xx, i_yy
+        return Izz, None, Iyy
 
-    def get_shear_flow(self, segment, b, Sy, Sz, n):
+    def get_shear_flow(self, segment, b, Sy, Sz, n):  # OK
 
         # input data
         t_sk = self.input['tsk'][self.aircraft]
@@ -164,7 +163,7 @@ class CrossSection:
 
             f = fx
             h_i = (t - a) / num
-            A = 0.5 * h * (f(a) + f(t))
+            A = 0.5 * h_i * (f(a) + f(t))
             for i in range(1, num):
                 A += h_i * (f(a + i * h_i))
             return A
@@ -249,7 +248,7 @@ class CrossSection:
 
         return qbl
 
-    def get_shear_flow_per_section(self):
+    def get_shear_flow_per_section(self):  # OK
 
         # get input data
         h = self.input['h'][self.aircraft]/2
@@ -268,7 +267,7 @@ class CrossSection:
 
         return qb1, qb2, qb3, qb4, qb5, qb6
 
-    def get_shear_center(self):
+    def get_shear_center(self):  # OK
 
         """ Sy = 1 , Sz = 0 ==> z coord get shear center
             Sy = 1 , Sz = 1 ==> output shear flow distribution """
@@ -339,7 +338,7 @@ class CrossSection:
         b1 = -2 * h / t_sp
         b2 = 2 * (incl / t_sk) + 2 * h / t_sp
 
-        A = np.array([[a1, b1], [a2, b2]])
+        A = np.array([[a1, a2], [b1, b2]])
         g = np.array([-a3, -b3])
         solution = np.linalg.solve(A, g)
         qs01 = solution[0]
@@ -356,7 +355,7 @@ class CrossSection:
         return shear_center, shear_lst
 
     # Calculation of the enclosed areas of both cells
-    def cell_area(self):
+    def cell_area(self):  # OK
         """ get cell area in m^2 """
 
         # get input values
@@ -369,7 +368,7 @@ class CrossSection:
 
         return a1, a2
 
-    def twist_of_aileron(self, torque_lst, G):
+    def twist_of_aileron(self, T_lst, G):
 
         """Solves a set of 3 equations for unit torque applied, output q1, q2 and twsit_rate_times_G
         For T_lst use the value of the torque at each location, for examply for adding a loop or using
@@ -387,62 +386,62 @@ class CrossSection:
         per_semicircle = CrossSection.stiffener_spacing(self)[2]
         per_triangle = CrossSection.stiffener_spacing(self)[3]
 
-        # function
+        # For T_lst use the value of the torque at each location, for examply for adding a loop or using input out of a list of torques
+        # For verification, one can change the perimiter of the circle and triangle by chaning the geometry and calculate the q1,q2 and twist rate and see wheter it makes sense or not
+        # After computing twist rate, take distance from hinge line to shear center to compute the deflection of the hinge line
         k = 1 / (2 * a_1) * (per_semicircle / t_sk + 2 * h / t_sp)
         l = 1 / (2 * a_1) * -2 * h / t_sp
         m = 1 / (2 * a_2) * -2 * h / t_sp
         n = 1 / (2 * a_2) * (per_triangle / t_sk + 2 * h / t_sp)
         B = np.array([[2 * a_1, 2 * a_2, 0], [k, l, -1], [m, n, -1]])
         twist_rate_lst = []
+        q1_lst = []
+        q2_lst = []
         x_theta_0 = l_a / 2  # due to assumption around x, x_sc in middle [m]
         theta_0 = 0  # this is a boundary condition [rad]
 
-        for i in range(len(torque_lst)):
-            w = np.array([torque_lst[i], 0, 0])
+        for i in range(len(T_lst)):
+            w = np.array([T_lst[i], 0, 0])
             solution = np.linalg.solve(B, w)
             q1 = solution[0]
             q2 = solution[1]
+            q1_lst.append(q1)
+            q2_lst.append(q2)
             twist_rate_times_G = solution[2]
             twist_rate = twist_rate_times_G / G
             twist_rate_lst.append(twist_rate)
-
-        J = torque_lst[-1] / twist_rate_times_G  # calculate the J for a combination of torque and twist rate
-        # step in x direction between the points where the torque is computed and thus where twist_rate is known
-        dx = l_a / len(torque_lst)
-        # number of full steps until location of boundary condition reached, returns an integer
-        n_steps = math.floor(x_theta_0 / dx)
+        J = T_lst[-1] / twist_rate_times_G  # calculate the J for a combination of torque and twist rate
+        dx = l_a / (len(
+            T_lst) - 1)  # step in x direction between the points where the torque is computed and thus where twist_rate is known
+        n_steps = math.floor(
+            x_theta_0 / dx)  # number of full steps untill location of boundary condition reached, returns an integer
         twist_before_bc = sum([twist_rate_lst[j] for j in range(n_steps)]) * dx + theta_0  # twist of first section
         twist_lst = [twist_before_bc]
         twist_after_bc = 0
-
-        for i in range(1, len(torque_lst)):
+        for i in range(1, len(T_lst)):
             if i < n_steps:
-                # compute the twist of each section between two points (positive for positive twist rate)
-                twist_before_bc = twist_before_bc - twist_rate_lst[i - 1] * dx
+                twist_before_bc = twist_before_bc - twist_rate_lst[
+                    i - 1] * dx  # compute the twist of each section between two points (positive for positive twist rate)
                 twist_lst.append(twist_before_bc)
 
             if i == n_steps:  # this is the section where the boundary condition is applied
-                twist_lst.append(theta_0)
-                # now the section of the boundary condition is reached, this entire section attains
-                # this value (neglecting the twist along the even smaller subsection if point of
-                # boundary condition falls in between two points)
-
+                twist_lst.append(
+                    theta_0)  # now the section of the boundary condition is reached, this entire section attains this value (neglecting the twist along the even smaller subsection if point of boundary condition falls in between two points)
             if i > n_steps:
-                # or -, plot if torque distribution is known. At the boundary condition,
-                # the sign of the twist should change
-                twist_after_bc = twist_after_bc + twist_rate_lst[i] * dx
+                twist_after_bc = twist_after_bc + twist_rate_lst[
+                    i] * dx  # or -, plot if torque distribution is known. At the boundary condition, the sign of the twist should change
                 twist_lst.append(twist_after_bc)
 
-        return q1, q2, J, twist_rate_lst, twist_lst  # J, twist rate and twist at every x location taken
+        return q1_lst, q2_lst, J, twist_rate_lst, twist_lst  # J, twist rate and twist at every x location taken
 
     def get_j(self):
         """ get torsional stiffness """
 
         # input values
-        torque_lst = [1]
+        T_lst = [-2,-1,-3]
         g = self.input['G'][self.aircraft]
 
-        return CrossSection.twist_of_aileron(self, torque_lst, g)[2]
+        return CrossSection.twist_of_aileron(self, T_lst, g)[2]
 
     """ ============================ Plotting and reporting results ============================ """
 
@@ -475,8 +474,8 @@ class CrossSection:
             'centroid': CrossSection.get_centroid(self),
             'torsional stiffness J': CrossSection.get_j(self),
             'i_zz': CrossSection.get_moments_inertia(self)[0],
-            'i_yy': CrossSection.get_moments_inertia(self)[1],
-            'i_xx': CrossSection.get_moments_inertia(self)[2]
+            'i_xx': CrossSection.get_moments_inertia(self)[1],
+            'i_yy': CrossSection.get_moments_inertia(self)[2]
         }
 
         return all_dict
@@ -491,7 +490,7 @@ class CrossSection:
 
 # ==================================================================================================
 # debugging setting
-DEBUG = False
+DEBUG = True
 
 if DEBUG:
     cross_section = CrossSection(input_dict, 'A')

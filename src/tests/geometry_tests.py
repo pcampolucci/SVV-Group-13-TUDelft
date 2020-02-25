@@ -30,6 +30,7 @@ def increase_stiffeners(debug=False):
     base_centroid = test_section.get_centroid()[1]
     base_i_zz = test_section.get_moments_inertia()[0]
     base_i_xx = test_section.get_moments_inertia()[2]
+    print("Official Test Section")
     get_plot(debug, test_section, None)
 
     # add stiffeners in front, assert change in mom and center
@@ -112,5 +113,5 @@ def increase_area_structures(debug=False):
 
 
 # =========== EXECUTE TESTS ===========
-increase_stiffeners(False)
-increase_area_structures(False)
+increase_stiffeners(True)
+increase_area_structures(True)
