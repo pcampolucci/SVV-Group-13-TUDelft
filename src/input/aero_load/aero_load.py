@@ -10,9 +10,8 @@ import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import pandas as pd
 from src.input.general.discrete_input import input_dict
+from tqdm import tqdm
 
-# debug method
-DEBUG = False
 
 # define class
 class AeroLoad:
@@ -117,6 +116,7 @@ class AeroLoad:
 
         return value
 
+    # plotting
 
     def plot_distribution_3D(self):
         # make a dataframe
@@ -135,18 +135,23 @@ class AeroLoad:
         plt.figure(1)
 
         # plot discrete distribution
-        for i in range(len(q_x)):
+        for i in tqdm(range(len(q_x)), desc="Getting discrete distribution"):
             plt.plot([coord[i], coord[i]], [0, q_x[i]], color='b')
 
         # plot distribution with linear interpolation
         big_span = np.linspace(coord[0], coord[-1], 500)
-        big_res = [self.get_q(x) for x in big_span]
+        big_res = [self.get_q(x) for x in tqdm(big_span, desc="Getting linear distribution")]
         plt.plot(big_span, big_res, color='r')
 
         plt.show()
         return 0
 
+# ========================================================================================
 # execute when debugging
+
+# debug method
+DEBUG = True
+
 if DEBUG:
     a320 = AeroLoad('A')
     a320.plot_distribution_2D()

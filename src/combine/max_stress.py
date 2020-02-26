@@ -18,8 +18,6 @@ class ShearStress:
     def __init__(self, aircraft, steps):
         self.input = input_dict
         self.aircraft = aircraft
-        self.q_1 = CrossSection(input_dict, self.aircraft).twist_of_aileron([1], self.input['G'][self.aircraft])[0]
-        self.q_2 = CrossSection(input_dict, self.aircraft).twist_of_aileron([1], self.input['G'][self.aircraft])[1]
         self.q_lst = CrossSection(input_dict, self.aircraft).get_shear_center()[1]
         self.x_location = np.linspace(0.0001, self.input["la"][self.aircraft], steps)
         self.n_points = steps
@@ -274,6 +272,7 @@ class ShearStress:
 DEBUG = True
 
 if DEBUG:
-    shear = ShearStress('A', 10)
+    shear = ShearStress('B', 10)
     shear.plot_shear_3d()
+    print(shear.von_mises_stress_distribution())
 

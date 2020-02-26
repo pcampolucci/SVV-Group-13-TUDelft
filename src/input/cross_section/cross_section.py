@@ -411,8 +411,7 @@ class CrossSection:
             twist_rate = twist_rate_times_G / G
             twist_rate_lst.append(twist_rate)
         J = T_lst[-1] / twist_rate_times_G  # calculate the J for a combination of torque and twist rate
-        dx = l_a / (len(
-            T_lst) - 1)  # step in x direction between the points where the torque is computed and thus where twist_rate is known
+        dx = l_a / (len(T_lst) - 1)  # step in x direction between the points where the torque is computed and thus where twist_rate is known
         n_steps = math.floor(
             x_theta_0 / dx)  # number of full steps untill location of boundary condition reached, returns an integer
         twist_before_bc = sum([twist_rate_lst[j] for j in range(n_steps)]) * dx + theta_0  # twist of first section
@@ -490,7 +489,7 @@ class CrossSection:
 
 # ==================================================================================================
 # debugging setting
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     cross_section = CrossSection(input_dict, 'A')
