@@ -6,11 +6,10 @@ Aerodynamic Load Analizer and Plotter
 
 # importing packages
 import numpy as np
-import plotly.graph_objects as go
 import matplotlib.pyplot as plt
-import pandas as pd
 from src.input.general.discrete_input import input_dict
 from tqdm import tqdm
+from mpl_toolkits.mplot3d import Axes3D
 
 
 # define class
@@ -84,7 +83,7 @@ class AeroLoad:
             resultant = 0
 
             for i in range(len(spacing)-1):
-                r_i = (row[i] + row[i+1])*spacing[i]*0.5
+                r_i = (row[i] + row[i+1])*(spacing[i+1] - spacing[i])*0.5
                 resultant += r_i
 
             return resultant
@@ -118,30 +117,31 @@ class AeroLoad:
 
     # ========================================================================================================
 
-    def plot_distribution_3D(self):
-        # make a dataframe
-        df = pd.DataFrame(self.get_mat(), self.get_coord()[0])
-        df.columns = self.get_coord()[1]
-
-        fig = go.Figure(data=[go.Surface(z=df.values, x=self.get_coord()[1], y=self.get_coord()[0])])
-
-        fig.show()
-
     def plot_distribution_2D(self):
 
         q_x = self.get_discrete_distribution()
         coord = self.get_coord()[1]
 
         plt.figure(1)
+        plt.title(f"Aerodynamic load distribution for aircraft: {self.a}")
+
+        # plot span
+        plt.plot([0, -self.span], [0, 0] , color='k', label='span', linewidth=2)
 
         # plot discrete distribution
         for i in tqdm(range(len(q_x)), desc="Getting discrete distribution"):
             plt.plot([coord[i], coord[i]], [0, q_x[i]], color='b')
+        plt.plot(0, 0, color='b', label='discrete resultants')
 
         # plot distribution with linear interpolation
-        big_span = np.linspace(coord[0], coord[-1], 500)
+        big_span = np.linspace(coord[0], coord[-1], 10)
         big_res = [self.get_q(x) for x in tqdm(big_span, desc="Getting linear distribution")]
-        plt.plot(big_span, big_res, color='r')
+        plt.plot(big_span, big_res, color='r', label='load function')
+
+        # plot legend and labels
+        plt.legend(loc='lower left')
+        plt.xlabel("Span [m]")
+        plt.ylabel("Load distribution [kN/m]")
 
         plt.show()
         return 0

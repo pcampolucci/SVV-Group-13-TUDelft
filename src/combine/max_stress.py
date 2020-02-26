@@ -2,12 +2,9 @@
 Title: Max Shear Stress tool
 """
 
-from src.input.cross_section.cross_section import CrossSection
-from src.input.general.discrete_input import input_dict
 import numpy as np
-import math
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+from src.input.input import Input
 from src.loads.torque import Torque
 from src.loads.moment import Moment
 from tqdm import tqdm
@@ -16,22 +13,40 @@ from tqdm import tqdm
 class MaxStress:
 
     def __init__(self, aircraft, steps):
-        self.input = input_dict
-        self.aircraft = aircraft
-        self.q_lst = CrossSection(input_dict, self.aircraft).get_shear_center()[1]
-        self.x_location = np.linspace(0.0001, self.input["la"][self.aircraft], steps)
-        self.n_points = steps
-        self.T = [float(Torque(self.aircraft).T(i)) for i in tqdm(self.x_location, desc="Torque")]
-        self.My = [float(Moment(self.aircraft).M_y(i)) for i in tqdm(self.x_location, desc="Moment Y")]
-        self.Mz = [float(Moment(self.aircraft).M_z(i)) for i in tqdm(self.x_location, desc="Moment Z")]
 
+        # initialize geometry and info
+        self.a = aircraft
+        self.steps = steps
+        self.input = Input(self.a).get_discrete()  # get input dict
+        self.q_lst = Input(self.a).cross_section_input().get_shear_center()[1]  # shear list
+        self.x_location = np.linspace(1e-10, self.input["la"][self.a], steps)  # get loads like steps
 
-    def shear_stress_due_to_shear(self):  # compute shear stress in skins and spar by dividing by thickness, note spar shear flow not included in shear_flow_lst
-        # Shear stress distribution per section due to Sy and Sz computed at the middle of each section
+        # get forces along span for stress computation
+        self.T = [float(Torque(self.a).T(i)) for i in tqdm(self.x_location, desc="Torque")]
+        self.My = [float(Moment(self.a).M_y(i)) for i in tqdm(self.x_location, desc="Moment Y")]
+        self.Mz = [float(Moment(self.a).M_z(i)) for i in tqdm(self.x_location, desc="Moment Z")]
 
+    # ============================================================================================================
+    # GET AILERON TWIST
+
+    def twist_of_aileron(self):
+
+        cross_section = Input(self.a).cross_section_input()
+        q1_lst, q2_lst, J, twist_rate_lst, twist_lst = cross_section.twist_of_aileron(self.T, self.input['G'][self.a])
+
+        return q1_lst, q2_lst, J, twist_rate_lst, twist_lst  # J, twist rate and twist at every x location taken
+
+    # ============================================================================================================
+    # GET STRESS DUE TO TORSION AND SHEAR
+
+    def shear_stress_due_to_shear(self):
+        """ compute shear stress in skins and spar by dividing by thickness, note spar shear flow not included in shear_flow_lst
+        Shear stress distribution per section due to Sy and Sz computed at the middle of each section """
+
+        # input values
         qb1, qb2, qb3, qb4, qb5, qb6 = self.q_lst
-        t_sk = self.input['tsk'][self.aircraft]
-        t_sp = self.input['tsp'][self.aircraft]
+        t_sk = self.input['tsk'][self.a]
+        t_sp = self.input['tsp'][self.a]
 
         tau_1 = [qb1[i] / t_sk for i in range(len(qb1))]
         tau_2 = [qb2[i] / t_sp for i in range(len(qb2))]
@@ -39,77 +54,14 @@ class MaxStress:
         tau_4 = [qb4[i] / t_sk for i in range(len(qb4))]
         tau_5 = [qb5[i] / t_sp for i in range(len(qb5))]
         tau_6 = [qb6[i] / t_sk for i in range(len(qb6))]
+
         return tau_1, tau_2, tau_3, tau_4, tau_5, tau_6
-
-    def twist_of_aileron(self):
-
-        """Solves a set of 3 equations for unit torque applied, output q1, q2 and twsit_rate_times_G
-        For T_lst use the value of the torque at each location, for examply for adding a loop or using input out of a list of torques
-        For verification, one can change the perimiter of the circle and triangle by chaning the geometry and calculate the q1,q2 and twist rate and see wheter it makes sense or not
-        After computing twist rate, take distance from hinge line to shear center to compute the deflection of the hinge line"""
-
-        # input
-        T_lst = self.T
-        t_sk = self.input['tsk'][self.aircraft]
-        t_sp = self.input['tsp'][self.aircraft]
-        l_a = self.input['la'][self.aircraft]
-        G = self.input['G'][self.aircraft]
-        A1, A2 = CrossSection(self.input, self.aircraft).cell_area()
-        h = self.input['h'][self.aircraft]/2
-        per_triangle = CrossSection(self.input, self.aircraft).stiffener_spacing()[3]
-        per_semicircle = CrossSection(self.input, self.aircraft).stiffener_spacing()[2]
-
-        # function
-        k = 1 / (2 * A1) * (per_semicircle / t_sk + 2 * h / t_sp)
-        l = 1 / (2 * A1) * -2 * h / t_sp
-        m = 1 / (2 * A2) * -2 * h / t_sp
-        n = 1 / (2 * A2) * (per_triangle / t_sk + 2 * h / t_sp)
-        B = np.array([[2 * A1, 2 * A2, 0], [k, l, -1], [m, n, -1]])
-        twist_rate_lst = []
-        q1_lst = []
-        q2_lst = []
-        x_theta_0 = l_a / 2  # due to assumption around x, x_sc in middle [m]
-        theta_0 = 0  # this is a boundary condition [rad]
-
-        for i in tqdm(range(len(T_lst)), desc="twist of aileron"):
-            w = np.array([T_lst[i], 0, 0])
-            solution = np.linalg.solve(B, w)
-            q1 = solution[0]
-            q2 = solution[1]
-            q1_lst.append(q1)
-            q2_lst.append(q2)
-            twist_rate_times_G = solution[2]
-            twist_rate = twist_rate_times_G / G
-            twist_rate_lst.append(twist_rate)
-
-        J = T_lst[-1] / twist_rate_times_G  # calculate the J for a combination of torque and twist rate
-        dx = l_a / (len(T_lst) - 1)  # step in x direction between the points where the torque is computed and thus where twist_rate is known
-        n_steps = math.floor(x_theta_0 / dx)  # number of full steps untill location of boundary condition reached, returns an integer
-        twist_before_bc = sum([twist_rate_lst[j] for j in range(n_steps)]) * dx + theta_0  # twist of first section
-        twist_lst = [twist_before_bc]
-        twist_after_bc = 0
-
-        for i in range(1, len(T_lst)):
-            if i < n_steps:
-                twist_before_bc = twist_before_bc - twist_rate_lst[
-                    i - 1] * dx  # compute the twist of each section between two points (positive for positive twist rate)
-                twist_lst.append(twist_before_bc)
-
-            if i == n_steps:  # this is the section where the boundary condition is applied
-                twist_lst.append(
-                    theta_0)  # now the section of the boundary condition is reached, this entire section attains this value (neglecting the twist along the even smaller subsection if point of boundary condition falls in between two points)
-            if i > n_steps:
-                twist_after_bc = twist_after_bc + twist_rate_lst[
-                    i] * dx  # or -, plot if torque distribution is known. At the boundary condition, the sign of the twist should change
-                twist_lst.append(twist_after_bc)
-
-        return q1_lst, q2_lst, J, twist_rate_lst, twist_lst  # J, twist rate and twist at every x location taken
 
     def shear_stress_due_to_torsion(self):
 
         # input values
-        t_sk = self.input['tsk'][self.aircraft]
-        t_sp = self.input['tsp'][self.aircraft]
+        t_sk = self.input['tsk'][self.a]
+        t_sp = self.input['tsp'][self.a]
         q1, q2 = self.twist_of_aileron()[:2]
 
         tau_skin_cell_1_lst = [q1[i] / t_sk for i in range(len(q1))]
@@ -139,14 +91,17 @@ class MaxStress:
             total_shear_stress_distribution_at_every_x_loc.append(
                 tau_total_1_at_x_loc + tau_total_2_at_x_loc + tau_total_3_at_x_loc + tau_total_4_at_x_loc + tau_total_5_at_x_loc + tau_total_6_at_x_loc)
 
-        return total_shear_stress_distribution_at_every_x_loc  # example output[0] = shear stress distribution at first x location along the span, in the order of the sections 1,2,3,4,5,6
+        return total_shear_stress_distribution_at_every_x_loc
+
+    # ============================================================================================================
+    # GET VON MISES STRESS
 
     def z_location(self):
 
         # input
-        n1 = self.input['n_points'][self.aircraft]
-        h = self.input['h'][self.aircraft]/2
-        C_a = self.input['Ca'][self.aircraft]
+        n1 = self.input['n_points'][self.a] # number of points checked per segment
+        h = self.input['h'][self.a] / 2
+        C_a = self.input['Ca'][self.a]
 
         s_co2 = np.linspace(0, h, 2 * n1)
 
@@ -155,7 +110,7 @@ class MaxStress:
         zco1 = []
         yco1 = []
         h_seg = 0.5 * np.pi / ((len(segment) * n1) - 1)
-        for segment in segment:
+        for sub_segment in segment:
             for i in range(n1):
                 b = h_seg * (i + ds)
                 zco1.append(-(h - h * np.cos(b)))
@@ -179,18 +134,18 @@ class MaxStress:
     def direct_stress_distribution(self):  # for a unit moment in x and y direction
 
         yco1, zco1, yco2, zco2, yco3, zco3, yco4, zco4, yco5, zco5, yco6, zco6 = self.z_location()
-        Iyy = CrossSection(self.input, self.aircraft).get_moments_inertia()[2]
-        zc = CrossSection(self.input, self.aircraft).get_centroid()[1]
+        Iyy = Input(self.a).cross_section_input().get_moments_inertia()[2]
+        zc = Input(self.a).cross_section_input().get_centroid()[1]
         My = np.array(self.My)
         Mz = np.array(self.Mz)
 
         direct_stress_per_x = []
 
-        for j in range(self.n_points):
+        for j in range(self.steps):
+            """Computes the Direct stress distrubtion along the cross-section at each point
+             where the shear flow is calculated based on the Mx and My of a specific location along the span"""
 
-            """Computes the Direct stress distrubtion along the cross-section at each point where the shear flow is calculated based on the Mx and My of a specific location along the span"""
-
-            sigma_xx_1 = [My * (zco1[i] - zc) / Iyy + Mz * yco1[i] for i in tqdm(range(len(zco1)), desc="direct stress distribution")]
+            sigma_xx_1 = [My * (zco1[i] - zc) / Iyy + Mz * yco1[i] for i in range(len(zco1))]
             sigma_xx_2 = [My * (zco2[i] - zc) / Iyy + Mz * yco2[i] for i in range(len(zco2))]
             sigma_xx_3 = [My * (zco3[i] - zc) / Iyy + Mz * yco3[i] for i in range(len(zco3))]
             sigma_xx_4 = [My * (zco4[i] - zc) / Iyy + Mz * yco4[i] for i in range(len(zco4))]
@@ -198,7 +153,6 @@ class MaxStress:
             sigma_xx_6 = [My * (zco6[i] - zc) / Iyy + Mz * yco6[i] for i in range(len(zco6))]
 
             direct_stress_per_x.append(sigma_xx_1 + sigma_xx_2 + sigma_xx_3 + sigma_xx_4 + sigma_xx_5 + sigma_xx_6)
-
 
         return direct_stress_per_x
 
@@ -211,11 +165,15 @@ class MaxStress:
         shear_stress_distribution = self.total_shear_stress()
         sigma_vm_distribution_at_every_x_loc = []
 
-        for j in range(self.n_points):
-            sigma_vm = [np.sqrt(direct_stress_distribution[j-1][i] ** 2 + 3 * shear_stress_distribution[j-1][i] ** 2) for i in range(len(direct_stress_distribution[0]))]
+        for j in range(self.steps):
+            sigma_vm = [np.sqrt(direct_stress_distribution[j-1][i] ** 2 + 3 * shear_stress_distribution[j-1][i]
+                                ** 2) for i in range(len(direct_stress_distribution[0]))]
             sigma_vm_distribution_at_every_x_loc.append(sigma_vm)
 
-        return sigma_vm_distribution_at_every_x_loc  # example sigma_vm_distribution[0] is the distribution at the first x-location taken along the span
+        return sigma_vm_distribution_at_every_x_loc
+
+    # ============================================================================================================
+    # PLOTTING
 
     def plot_shear_2d(self, x):
 
@@ -227,7 +185,7 @@ class MaxStress:
             yco1.extend(i)
             zco1.extend(j)
 
-        plt.scatter(zco1, yco1, c=von_mises[x, :, x], cmap='jet')
+        plt.scatter(zco1[x], yco1[x], c=von_mises[x, :, x], cmap='jet')
         plt.xlabel('z[m]', fontsize=16)
         plt.ylabel('y[m]', fontsize=16)
         # plt.legend()
@@ -243,7 +201,7 @@ class MaxStress:
         yco1, zco1, yco2, zco2, yco3, zco3, yco4, zco4, yco5, zco5, yco6, zco6 = self.z_location()
         von_mis = np.array(self.von_mises_stress_distribution())
 
-        l_a = self.input['la'][self.aircraft]
+        l_a = self.input['la'][self.a]
         x_axis = np.linspace(0, l_a, len(von_mis))
 
         for i, j in zip([yco2, yco3, yco4, yco5, yco6], [zco2, zco3, zco4, zco5, zco6]):
@@ -268,9 +226,9 @@ class MaxStress:
         return 0
 
 # debugging ========================================
-DEBUG = False
+DEBUG = True
 
 if DEBUG:
-    shear = MaxStress('B', 5)
+    shear = MaxStress('A', 5)
     shear.plot_shear_3d()
 

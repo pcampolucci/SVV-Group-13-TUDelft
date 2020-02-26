@@ -158,7 +158,7 @@ class CrossSection:
         incl = self.get_incl()
         zc = self.get_centroid()[1]
 
-        def integrate(a, t, num, fx):
+        def integrate(a, t, num, fx): # OK
             """ enter function in the form lambda x:f(x) """
 
             f = fx

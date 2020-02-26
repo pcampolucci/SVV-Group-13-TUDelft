@@ -15,7 +15,7 @@ print("=" * 100)
 print(" " * 30, "SVV SIMULATION TOOL", " " * 30,)
 print("=" * 100)
 
-aircraft = 'A' #choose_aircraft()
+aircraft = 'B' #choose_aircraft()
 # scenario = choose_scenario()
 
 print()

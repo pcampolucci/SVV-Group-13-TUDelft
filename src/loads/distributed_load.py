@@ -1,16 +1,15 @@
 """
 Title: Functions for aerodynamic distributed load discretization
+
+The get_discrete_xxxx functions make discrete functions for the respective xxxxx feature.
+The xxxxx_resultants use these discrete functions/arrays then to derrive the approximated value at an exact input
+location.
+NOTE: The input of the get_discrete_xxx functions should always be the total length of the aileron, i.e. length
+aileron (la)
 """
 
 import numpy as np
 from src.input.input import Input
-
-# ======================  8 Functions  ======================================
-""" The get_discrete_xxxx functions make discrete functions for the respective xxxxx feature.
-  The xxxxx_resultants use these discrete functions/arrays then to derrive the approximated value at an exact input 
-  location. 
-  NOTE: The input of the get_discrete_xxx functions should always be the total length of the aileron, i.e. length 
-  aileron (la) """
 
 
 def trapezoidal_rule(row, step):
@@ -47,7 +46,7 @@ def get_discrete_resultant(la, discrete_load, step):
 def magnitude_resultant(x, discrete_resultant, step):
     """ Finds resultant force of distribution from 0 till x_end according to given span distr.
         First it takes points from that distr and then uses trapezoidal rule. """
-    return 0.5*(discrete_resultant[int((x+step)/step)]+discrete_resultant[int(x/step)])
+    return 0.5*(discrete_resultant[int((x+step)/step)-1]+discrete_resultant[int(x/step)-1])
 
 
 # --------------- Discrete locations -----------------------
@@ -66,7 +65,7 @@ def get_discrete_location_resultant(la, discrete_resultant, discrete_load, step)
 def location_resultant(x, discrete_location, step):
     """ Finds resultant force of distribution from 0 till x_end according to given span distr.
         First it takes points from that distr and then uses trapezoidal rule. """
-    return 0.5*(discrete_location[int((x+step)/step)]+discrete_location[int(x/step)])
+    return 0.5*(discrete_location[int((x+step)/step)-1]+discrete_location[int(x/step)-1])
 
 
 # --------------- Discrete moments -----------------------
@@ -119,11 +118,11 @@ def deflection_resultant(x, discrete_deflection, step):
 
 # ===============================================================================
 """ Checks for constant load -55.7 N/m (The load case of the B737) """
-"""DEBUG = False
+DEBUG = False
 
 if DEBUG:
     # inputs
-    la = 1  # [m] end point, set calc will be done for distr from 0 till this point
+    la = 2.661  # [m] end point, set calc will be done for distr from 0 till this point
     stepsize = 0.001  # [m] set the distance between points in trapezoidal rule
     load = Input('B').aero_input()
 
@@ -137,13 +136,13 @@ if DEBUG:
     discrete_deflections = get_discrete_deflection(la, discrete_angles, stepsize)
 
     # test
-    res1 = magnitude_resultant(1, discrete_resultants, stepsize)
+    res1 = magnitude_resultant(la, discrete_resultants, stepsize)
     print('Resultant should be -55.7 = ', res1)
-    loc1 = location_resultant(1, discrete_locations, stepsize)
+    loc1 = location_resultant(la, discrete_locations, stepsize)
     print('location should be 0.5 = ', loc1)
-    mom1 = moment_resultant(1, discrete_moments, stepsize)
+    mom1 = moment_resultant(la, discrete_moments, stepsize)
     print('moment should be ', -55.7/2, ' = ', mom1)
-    ang1 = angle_resultant(1, discrete_angles, stepsize)
+    ang1 = angle_resultant(la, discrete_angles, stepsize)
     print('Angle should be ', -55.7/2/3, ' = ', ang1)
-    def1 = deflection_resultant(1, discrete_deflections, stepsize)
-    print('Deflection should be ', -55.7/2/3/4, ' = ', def1)"""
+    def1 = deflection_resultant(la, discrete_deflections, stepsize)
+    print('Deflection should be ', -55.7/2/3/4, ' = ', def1)
