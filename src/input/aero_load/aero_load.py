@@ -116,7 +116,7 @@ class AeroLoad:
 
         return value
 
-    # plotting
+    # ========================================================================================================
 
     def plot_distribution_3D(self):
         # make a dataframe
@@ -146,11 +146,11 @@ class AeroLoad:
         plt.show()
         return 0
 
+
 # ========================================================================================
 # execute when debugging
-
 # debug method
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     a320 = AeroLoad('A')

@@ -481,7 +481,8 @@ class CrossSection:
 
     def get_report(self, param=None):
         print("\nCross section input information for aircraft aileron\n")
-        print(self.get_all())
+        for key in self.get_all():
+            print(f"|{key} = {self.get_all()[key]}")
         print("\nPlotting ...\n")
         self.plot_cross_section(param)
         return 0

@@ -5,12 +5,6 @@ Title: Functions for aerodynamic distributed load discretization
 import numpy as np
 from src.input.input import Input
 
-
-# ===================  Global inputs to generate arrays  =========================
-la = 2.661
-stepsize = 0.001  # [m] set the distance between points in trapezoidal rule
-load = Input('B').aero_input()
-
 # ======================  8 Functions  ======================================
 """ The get_discrete_xxxx functions make discrete functions for the respective xxxxx feature.
   The xxxxx_resultants use these discrete functions/arrays then to derrive the approximated value at an exact input 
@@ -123,25 +117,24 @@ def deflection_resultant(x, discrete_deflection, step):
     return 0.5*(discrete_deflection[int((x+step)/step)]+discrete_deflection[int(x/step)])
 
 
-# ========================= Arrays ===========================
-"""  The discrete functions for the respective features.  """
-discrete_loads = get_discrete_load(la, load, stepsize)
-discrete_resultants = get_discrete_resultant(la, discrete_loads, stepsize)
-discrete_locations = get_discrete_location_resultant(la, discrete_resultants, discrete_loads, stepsize)
-discrete_moments = get_discrete_moment(discrete_resultants, discrete_locations)
-discrete_angles = get_discrete_angle(la, discrete_moments, stepsize)
-discrete_deflections = get_discrete_deflection(la, discrete_angles, stepsize)
-
-
 # ===============================================================================
 """ Checks for constant load -55.7 N/m (The load case of the B737) """
-DEBUG = True
+"""DEBUG = False
 
 if DEBUG:
     # inputs
-    x_end = 1  # [m] end point, set calc will be done for distr from 0 till this point
+    la = 1  # [m] end point, set calc will be done for distr from 0 till this point
     stepsize = 0.001  # [m] set the distance between points in trapezoidal rule
     load = Input('B').aero_input()
+
+    # ========================= Arrays ===========================
+    #  The discrete functions for the respective features.
+    discrete_loads = get_discrete_load(la, load, stepsize)
+    discrete_resultants = get_discrete_resultant(la, discrete_loads, stepsize)
+    discrete_locations = get_discrete_location_resultant(la, discrete_resultants, discrete_loads, stepsize)
+    discrete_moments = get_discrete_moment(discrete_resultants, discrete_locations)
+    discrete_angles = get_discrete_angle(la, discrete_moments, stepsize)
+    discrete_deflections = get_discrete_deflection(la, discrete_angles, stepsize)
 
     # test
     res1 = magnitude_resultant(1, discrete_resultants, stepsize)
@@ -153,4 +146,4 @@ if DEBUG:
     ang1 = angle_resultant(1, discrete_angles, stepsize)
     print('Angle should be ', -55.7/2/3, ' = ', ang1)
     def1 = deflection_resultant(1, discrete_deflections, stepsize)
-    print('Deflection should be ', -55.7/2/3/4, ' = ', def1)
+    print('Deflection should be ', -55.7/2/3/4, ' = ', def1)"""

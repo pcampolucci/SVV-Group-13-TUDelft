@@ -7,17 +7,18 @@ import numpy as np
 from src.input.input import input_dict
 from src.input.cross_section.cross_section import CrossSection
 from src.loads.distributed_load import *
-from src.input.aero_load.aero_load import AeroLoad
+from src.input.input import Input
 import tqdm as tqdm
 
 
 class PointLoads:
 
-    def __init__(self, aircraft, steps):
+    def __init__(self, aircraft):
 
         self.aircraft = aircraft
         self.input = input_dict
-        self.step = steps
+        self.stepsize = 0.1
+        self.aero_load = Input(self.aircraft).aero_input()
 
     def get_discrete_input(self):
 
@@ -36,24 +37,33 @@ class PointLoads:
         P = self.input['P'][self.aircraft]
         E = self.input['E'][self.aircraft]
         G = self.input['G'][self.aircraft]
-        step = self.step
 
-        return x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, step
+        return x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, self.stepsize
 
     def get_distributed_loads_aero(self):
 
         # loads due to aerodynamic forces
+        x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, step = self.get_discrete_input()
+        load = self.aero_load
+        stepsize = self.stepsize
+
+        discrete_loads = get_discrete_load(la, load, stepsize)
+        discrete_resultants = get_discrete_resultant(la, discrete_loads, stepsize)
+        discrete_locations = get_discrete_location_resultant(la, discrete_resultants, discrete_loads, stepsize)
+        discrete_moments = get_discrete_moment(discrete_resultants, discrete_locations)
+        discrete_angles = get_discrete_angle(la, discrete_moments, stepsize)
+        discrete_deflections = get_discrete_deflection(la, discrete_angles, stepsize)
 
         # forces
-        Q_l = magnitude_resultant(la, discrete_resultants, step)  # aero force at la
+        Q_l = magnitude_resultant(la, discrete_resultants, self.stepsize)  # aero force at la
         # moments
-        Mqz_l = moment_resultant(la, discrete_moments, step)  # aero moment at la
+        Mqz_l = moment_resultant(la, discrete_moments, self.stepsize)  # aero moment at la
 
         # deflections
-        ddq_x2 = deflection_resultant(x2, discrete_deflections, step)
-        ddq_xa2 = deflection_resultant(xa2, discrete_deflections, step)
-        ddq_x1 = deflection_resultant(x1, discrete_deflections, step)
-        ddq_x3 = deflection_resultant(x3, discrete_deflections, step)
+        ddq_x2 = deflection_resultant(x2, discrete_deflections, self.stepsize)
+        ddq_xa2 = deflection_resultant(xa2, discrete_deflections, self.stepsize)
+        ddq_x1 = deflection_resultant(x1, discrete_deflections, self.stepsize)
+        ddq_x3 = deflection_resultant(x3, discrete_deflections, self.stepsize)
 
         return Q_l, Mqz_l, ddq_x2, ddq_xa2, ddq_x1, ddq_x3
 

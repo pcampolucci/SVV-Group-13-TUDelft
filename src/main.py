@@ -1,7 +1,7 @@
 """
 Main code
 
-@author: Willem Dekeyser
+@author: Group 13
 """
 
 # package import
@@ -15,8 +15,8 @@ print("=" * 100)
 print(" " * 30, "SVV SIMULATION TOOL", " " * 30,)
 print("=" * 100)
 
-aircraft = choose_aircraft()
-scenario = choose_scenario()
+aircraft = 'A' #choose_aircraft()
+# scenario = choose_scenario()
 
 print()
 
@@ -27,4 +27,7 @@ input_report = start.get_input_report()
 deflection = start.get_deflection_report()
 twist = start.get_twist_report()
 stress = start.get_max_stress_report()
+
+# finish
+print(f"\nSimulation Done")
 
