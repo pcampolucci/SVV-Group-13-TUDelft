@@ -25,8 +25,8 @@ class PointLoads:
         x2 = self.input['x2'][self.aircraft]
         x3 = self.input['x3'][self.aircraft]
         xa = self.input['xa'][self.aircraft]
-        xa1 = 1.281 - 0.28 / 2
-        xa2 = 1.281 + 0.28 / 2
+        xa1 = self.input['xa1'][self.aircraft]
+        xa2 = self.input['xa2'][self.aircraft]
 
         d1 = self.input['d1'][self.aircraft]
         d3 = self.input['d3'][self.aircraft]
@@ -36,22 +36,26 @@ class PointLoads:
         P = self.input['P'][self.aircraft]
         E = self.input['E'][self.aircraft]
         G = self.input['G'][self.aircraft]
+        step = self.step
 
-        return x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la
+        return x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, step
 
     def get_distributed_loads_aero(self):
 
         # loads due to aerodynamic forces
 
         # forces
-        aero = AeroLoad(self.aircraft)
-        q = 1 # resultant aeroforce
-        Mqz = 1  # moment due to aero force
-        Tq = 1  # torque due to aero force (can be set 0 if we make assumption)
-        qq = 1  # double integral of aero moment for deflection
-        qqt = 0  # integral of moment for twist angle for twist (can be set to 0 if we make assumption)
+        Q_l = magnitude_resultant(la, discrete_resultants, step)  # aero force at la
+        # moments
+        Mqz_l = moment_resultant(la, discrete_moments, step)  # aero moment at la
 
-        return q, Mqz, Tq, qq, qqt
+        # deflections
+        ddq_x2 = deflection_resultant(x2, discrete_deflections, step)
+        ddq_xa2 = deflection_resultant(xa2, discrete_deflections, step)
+        ddq_x1 = deflection_resultant(x1, discrete_deflections, step)
+        ddq_x3 = deflection_resultant(x3, discrete_deflections, step)
+
+        return Q_l, Mqz_l, ddq_x2, ddq_xa2, ddq_x1, ddq_x3
 
     def get_geometry(self):
 
@@ -74,22 +78,9 @@ class PointLoads:
             OUTPUT: F_z1 , F_z2, F_z3, F_a, F_y1, F_y2, F_y3, c1, c2, c3, c4, c5 """
 
         # input values
-        x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la = self.get_discrete_input()
-        q, Mqz, Tq, qq, qqt = self.get_distributed_loads_aero()
+        x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, step = self.get_discrete_input()
+        Q_l, Mqz_l, ddq_x2, ddq_xa2, ddq_x1, ddq_x3 = self.get_distributed_loads_aero()
         dsch, dsca_y, dsca_z, Izz, Iyy, J, z = self.get_geometry()
-        step = self.step
-
-        # forces
-        q = AeroLoad(self.aircraft)
-        Q_l = magnitude_resultant(la, q, step)  # aero force at la
-        # moments
-        Mqz_l = moment_resultant(la, q, step)  # aero moment at la
-
-        # deflections
-        ddq_x2 = deflection_distributed(x2, q, step)
-        ddq_xa2 = deflection_distributed(xa2, q, step)
-        ddq_x1 = deflection_distributed(x1, q, step)
-        ddq_x3 = deflection_distributed(x3, q, step)
 
         # function
         cte_v = -1 / (E * Izz)  # cte in v deflection formula
