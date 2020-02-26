@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 loads = np.genfromtxt("load_A380.dat", delimiter =",")
-testloads = np.ones([81,41])
+testloads = np.ones([81, 41])
 
 zset = []
 xset = []

@@ -27,7 +27,8 @@ class Shear:
         if x > la:
             raise ValueError('Too far buddy')
 
-        Sy = - magnitude_resultant(x, self.aero_load, self.step)
+        Sy = - magnitude_resultant(x, discrete_resultants, step)  # aero force at la
+
 
         if x > x1:
             Sy += F_y1

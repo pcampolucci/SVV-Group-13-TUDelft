@@ -27,7 +27,7 @@ class Deflection:
         F_z1, F_z2, F_z3, F_a, F_y1, F_y2, F_y3, c1, c2, c3, c4, c5 = self.point_loads
         dsch, dsca_y, dsca_z, Izz, Iyy, J, z = self.geometry_input
 
-        qx = magnitude_resultant(x, self.aero_load, self.step)
+        qx = deflection_resultant(x2, discrete_deflections, step) # aero force at la
 
         v = -1 / E / Izz * (-qx) + c1 * x + c2
 
@@ -74,7 +74,7 @@ class Deflection:
         F_z1, F_z2, F_z3, F_a, F_y1, F_y2, F_y3, c1, c2, c3, c4, c5 = self.point_loads
         dsch, dsca_y, dsca_z, Izz, Iyy, J, z = self.geometry_input
 
-        qx = magnitude_resultant(x, self.aero_load, self.step)
+        qx = angle_resultant(1, discrete_angles, stepsize)
 
         dvdx = -1 / E / Izz * (-qx) + c1
 

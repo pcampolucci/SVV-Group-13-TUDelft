@@ -55,7 +55,7 @@ class Moment:
         if x > la:
             raise ValueError('Too far buddy')
         # Moment calculation with McCauly step functions
-        mz = - moment_resultant(x, self.aero_load, self.step)
+        mz = - moment_resultant(x, discrete_moments, step)
 
         # calculate moment
         if x > x1:
