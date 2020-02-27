@@ -134,7 +134,7 @@ class AeroLoad:
         plt.plot(0, 0, color='b', label='discrete resultants')
 
         # plot distribution with linear interpolation
-        big_span = np.linspace(coord[0], coord[-1], 10)
+        big_span = np.linspace(coord[0], coord[-1], 300)
         big_res = [self.get_q(x) for x in tqdm(big_span, desc="Getting linear distribution")]
         plt.plot(big_span, big_res, color='r', label='load function')
 

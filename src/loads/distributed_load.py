@@ -1,15 +1,22 @@
 """
 Title: Functions for aerodynamic distributed load discretization
-
-The get_discrete_xxxx functions make discrete functions for the respective xxxxx feature.
-The xxxxx_resultants use these discrete functions/arrays then to derrive the approximated value at an exact input
-location.
-NOTE: The input of the get_discrete_xxx functions should always be the total length of the aileron, i.e. length
-aileron (la)
 """
 
 import numpy as np
 from src.input.input import Input
+
+
+# ===================  Global inputs to generate arrays  =========================
+la = 2.661
+stepsize = 0.1  # [m] set the distance between points in trapezoidal rule
+load = Input('A').aero_input()
+
+# ======================  8 Functions  ======================================
+""" The get_discrete_xxxx functions make discrete functions for the respective xxxxx feature.
+  The xxxxx_resultants use these discrete functions/arrays then to derrive the approximated value at an exact input 
+  location. 
+  NOTE: The input of the get_discrete_xxx functions should always be the total length of the aileron, i.e. length 
+  aileron (la) """
 
 
 def trapezoidal_rule(row, step):
@@ -46,7 +53,9 @@ def get_discrete_resultant(la, discrete_load, step):
 def magnitude_resultant(x, discrete_resultant, step):
     """ Finds resultant force of distribution from 0 till x_end according to given span distr.
         First it takes points from that distr and then uses trapezoidal rule. """
-    return 0.5*(discrete_resultant[int((x+step)/step)-1]+discrete_resultant[int(x/step)-1])
+    if int((x+step)/step) >= len(discrete_resultant):
+        return discrete_resultant[int(x/step)]
+    return 0.5*(discrete_resultant[int((x+step)/step)]+discrete_resultant[int(x/step)])
 
 
 # --------------- Discrete locations -----------------------
@@ -65,7 +74,9 @@ def get_discrete_location_resultant(la, discrete_resultant, discrete_load, step)
 def location_resultant(x, discrete_location, step):
     """ Finds resultant force of distribution from 0 till x_end according to given span distr.
         First it takes points from that distr and then uses trapezoidal rule. """
-    return 0.5*(discrete_location[int((x+step)/step)-1]+discrete_location[int(x/step)-1])
+    if int((x+step)/step) >= len(discrete_location):
+        return discrete_location[int(x/step)]
+    return 0.5*(discrete_location[int((x+step)/step)]+discrete_location[int(x/step)])
 
 
 # --------------- Discrete moments -----------------------
@@ -79,6 +90,8 @@ def get_discrete_moment(discrete_resultant, discrete_location):
 def moment_resultant(x, discrete_moment, step):
     """ Finds resultant force of distribution from 0 till x_end according to given span distr.
         First it takes points from that distr and then uses trapezoidal rule. """
+    if int((x+step)/step) >= len(discrete_moment):
+        return discrete_moment[int(x/step)]
     return 0.5*(discrete_moment[int((x+step)/step)]+discrete_moment[int(x/step)])
 
 
@@ -96,6 +109,8 @@ def get_discrete_angle(la, discrete_moment, step):
 def angle_resultant(x, discrete_angle, step):
     """ Finds resultant force of distribution from 0 till x_end according to given span distr.
         First it takes points from that distr and then uses trapezoidal rule. """
+    if int((x+step)/step) >= len(discrete_angle):
+        return discrete_angle[int(x/step)]
     return 0.5*(discrete_angle[int((x+step)/step)]+discrete_angle[int(x/step)])
 
 
@@ -113,7 +128,19 @@ def get_discrete_deflection(la, discrete_angle, step):
 def deflection_resultant(x, discrete_deflection, step):
     """ Finds resultant force of distribution from 0 till x_end according to given span distr.
         First it takes points from that distr and then uses trapezoidal rule. """
+    if int((x+step)/step) > len(discrete_deflection):
+        return discrete_deflection[int(x/step)]
     return 0.5*(discrete_deflection[int((x+step)/step)]+discrete_deflection[int(x/step)])
+
+
+# ========================= Arrays ===========================
+"""  The discrete functions for the respective features.  """
+discrete_loads = get_discrete_load(la, load, stepsize)
+discrete_resultants = get_discrete_resultant(la, discrete_loads, stepsize)
+discrete_locations = get_discrete_location_resultant(la, discrete_resultants, discrete_loads, stepsize)
+discrete_moments = get_discrete_moment(discrete_resultants, discrete_locations)
+discrete_angles = get_discrete_angle(la, discrete_moments, stepsize)
+discrete_deflections = get_discrete_deflection(la, discrete_angles, stepsize)
 
 
 # ===============================================================================
@@ -122,27 +149,18 @@ DEBUG = False
 
 if DEBUG:
     # inputs
-    la = 2.661  # [m] end point, set calc will be done for distr from 0 till this point
+    x_end = 2.661  # [m] end point, set calc will be done for distr from 0 till this point
     stepsize = 0.001  # [m] set the distance between points in trapezoidal rule
     load = Input('B').aero_input()
 
-    # ========================= Arrays ===========================
-    #  The discrete functions for the respective features.
-    discrete_loads = get_discrete_load(la, load, stepsize)
-    discrete_resultants = get_discrete_resultant(la, discrete_loads, stepsize)
-    discrete_locations = get_discrete_location_resultant(la, discrete_resultants, discrete_loads, stepsize)
-    discrete_moments = get_discrete_moment(discrete_resultants, discrete_locations)
-    discrete_angles = get_discrete_angle(la, discrete_moments, stepsize)
-    discrete_deflections = get_discrete_deflection(la, discrete_angles, stepsize)
-
     # test
-    res1 = magnitude_resultant(la, discrete_resultants, stepsize)
+    res1 = magnitude_resultant(1, discrete_resultants, stepsize)
     print('Resultant should be -55.7 = ', res1)
-    loc1 = location_resultant(la, discrete_locations, stepsize)
+    loc1 = location_resultant(1, discrete_locations, stepsize)
     print('location should be 0.5 = ', loc1)
-    mom1 = moment_resultant(la, discrete_moments, stepsize)
+    mom1 = moment_resultant(1, discrete_moments, stepsize)
     print('moment should be ', -55.7/2, ' = ', mom1)
-    ang1 = angle_resultant(la, discrete_angles, stepsize)
+    ang1 = angle_resultant(1, discrete_angles, stepsize)
     print('Angle should be ', -55.7/2/3, ' = ', ang1)
-    def1 = deflection_resultant(la, discrete_deflections, stepsize)
+    def1 = deflection_resultant(1, discrete_deflections, stepsize)
     print('Deflection should be ', -55.7/2/3/4, ' = ', def1)

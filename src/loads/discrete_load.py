@@ -41,14 +41,6 @@ class PointLoads:
         # loads due to aerodynamic forces
         x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, step = self.get_discrete_input()
 
-        # get discrete loads
-        discrete_loads = get_discrete_load(la, self.aero_load, self.stepsize)
-        discrete_resultants = get_discrete_resultant(la, discrete_loads, self.stepsize)
-        discrete_locations = get_discrete_location_resultant(la, discrete_resultants, discrete_loads, self.stepsize)
-        discrete_moments = get_discrete_moment(discrete_resultants, discrete_locations)
-        discrete_angles = get_discrete_angle(la, discrete_moments, self.stepsize)
-        discrete_deflections = get_discrete_deflection(la, discrete_angles, self.stepsize)
-
         # obtain distributed loads
         # forces
         Q_l = magnitude_resultant(la, discrete_resultants, self.stepsize)  # aero force at la
@@ -143,7 +135,7 @@ class PointLoads:
 # ===============================================================================================
 # debugging
 
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
 
@@ -161,8 +153,11 @@ if DEBUG:
     Q_l, Mqz_l, ddq_x2, ddq_xa2, ddq_x1, ddq_x3 = point_loads.get_distributed_loads_aero()
 
     print(f"forces at la\n")
+    string = ["Resultant", "Moment", "defl x2", "defl_xa2", "defl_x1", "defl_x3"]
+    count = 0
     for i in [Q_l, Mqz_l, ddq_x2, ddq_xa2, ddq_x1, ddq_x3]:
-        print(i)
+        print(f"{string[count]}: {i}")
+        count += 1
 
 
 

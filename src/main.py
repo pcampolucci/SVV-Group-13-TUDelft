@@ -7,7 +7,7 @@ Main code
 # package import
 
 # directories connections
-from src.helpers.main_helpers import choose_aircraft, choose_scenario
+from src.helpers.main_helpers import choose_aircraft
 from src.combine.combine import Combine
 
 # user menu (choose report and airplane)
@@ -15,13 +15,12 @@ print("=" * 100)
 print(" " * 30, "SVV SIMULATION TOOL", " " * 30,)
 print("=" * 100)
 
-aircraft = 'B' #choose_aircraft()
-# scenario = choose_scenario()
+aircraft = choose_aircraft()
 
 print()
 
 # get reports
-start = Combine(aircraft)
+start = Combine(aircraft, 1000, 0.001)
 
 input_report = start.get_input_report()
 deflection = start.get_deflection_report()

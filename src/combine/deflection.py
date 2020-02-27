@@ -2,38 +2,35 @@
 Title: Max Shear Stress tool
 """
 
-from src.loads.discrete_load import PointLoads
-from src.input.input import input_dict
 import matplotlib.pyplot as plt
-from src.loads.distributed_load import *
+from src.loads.distributed_load import deflection_resultant, angle_resultant
+import numpy as np
 from tqdm import tqdm
 
 
 class Deflection:
 
-    def __init__(self, aircraft, step):
-        self.aircraft = aircraft
-        self.discrete_input = PointLoads(self.aircraft).get_discrete_input()
-        self.geometry_input = PointLoads(self.aircraft).get_geometry()
-        self.point_loads = PointLoads(self.aircraft).get_discrete_loads()
-        self.aero_load = Input(self.aircraft).aero_input()
+    def __init__(self, geometry_input, discrete_input, point_loads,
+                 discrete_angles, discrete_deflections, step_size, la, step, aircraft):
+
+        self.geometry_input = geometry_input
+        self.discrete_input = discrete_input
+        self.point_loads = point_loads
+        self.discrete_angles = discrete_angles
+        self.discrete_deflections = discrete_deflections
+        self.step_size = step_size
+        self.la = la
         self.step = step
-        self.stepsize = 0.1
+        self.aircraft = aircraft
 
     def Defl_Mz(self, x):
 
         # input
-        x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, stepsize = self.discrete_input
+        x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, size = self.discrete_input
         F_z1, F_z2, F_z3, F_a, F_y1, F_y2, F_y3, c1, c2, c3, c4, c5 = self.point_loads
         dsch, dsca_y, dsca_z, Izz, Iyy, J, z = self.geometry_input
 
-        discrete_loads = get_discrete_load(la, self.aero_load, self.stepsize)
-        discrete_resultants = get_discrete_resultant(la, discrete_loads, self.stepsize)
-        discrete_locations = get_discrete_location_resultant(la, discrete_resultants, discrete_loads, self.stepsize)
-        discrete_moments = get_discrete_moment(discrete_resultants, discrete_locations)
-        discrete_angles = get_discrete_angle(la, discrete_moments, self.stepsize)
-        discrete_deflections = get_discrete_deflection(la, discrete_angles, self.stepsize)
-        qx = deflection_resultant(x2, discrete_deflections, self.stepsize) # aero force at la
+        qx = deflection_resultant(x2, self.discrete_deflections, self.step_size) # aero force at la
 
         v = -1 / E / Izz * (-qx) + c1 * x + c2
 
@@ -53,7 +50,7 @@ class Deflection:
     def Defl_My(self, x):
 
         # input
-        x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, stepsize = self.discrete_input
+        x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, size = self.discrete_input
         F_z1, F_z2, F_z3, F_a, F_y1, F_y2, F_y3, c1, c2, c3, c4, c5 = self.point_loads
         dsch, dsca_y, dsca_z, Izz, Iyy, J, z = self.geometry_input
 
@@ -76,17 +73,11 @@ class Deflection:
     def Slope_y(self, x):
 
         # input
-        x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, stepsize = self.discrete_input
+        x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, size = self.discrete_input
         F_z1, F_z2, F_z3, F_a, F_y1, F_y2, F_y3, c1, c2, c3, c4, c5 = self.point_loads
         dsch, dsca_y, dsca_z, Izz, Iyy, J, z = self.geometry_input
 
-        discrete_loads = get_discrete_load(la, self.aero_load, self.stepsize)
-        discrete_resultants = get_discrete_resultant(la, discrete_loads, self.stepsize)
-        discrete_locations = get_discrete_location_resultant(la, discrete_resultants, discrete_loads, self.stepsize)
-        discrete_moments = get_discrete_moment(discrete_resultants, discrete_locations)
-        discrete_angles = get_discrete_angle(la, discrete_moments, self.stepsize)
-
-        qx = angle_resultant(1, discrete_angles, self.stepsize)
+        qx = angle_resultant(1, self.discrete_angles, self.step_size)
 
         dvdx = -1 / E / Izz * (-qx) + c1
 
@@ -110,7 +101,7 @@ class Deflection:
     def Slope_z(self, x):
 
         # input
-        x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, stepsize = self.discrete_input
+        x1, x2, x3, xa, xa1, xa2, theta, d1, d3, E, G, P, la, size = self.discrete_input
         F_z1, F_z2, F_z3, F_a, F_y1, F_y2, F_y3, c1, c2, c3, c4, c5 = self.point_loads
         dsch, dsca_y, dsca_z, Izz, Iyy, J, z = self.geometry_input
 
@@ -136,9 +127,7 @@ class Deflection:
     def plot_deflection(self):
         """ plots the deflections in y and z direction, together with the slope"""
 
-        la = input_dict['la'][self.aircraft]
-
-        x_axis = np.linspace(0, la, self.step)
+        x_axis = np.linspace(0, self.la, self.step)
         d_y = [float(self.Defl_My(d)) for d in tqdm(x_axis, desc="getting y deflection")]
         d_z = [float(self.Defl_Mz(d)) for d in tqdm(x_axis, desc="getting z deflection")]
         s_y = [float(self.Slope_y(d)) for d in tqdm(x_axis, desc="getting y slope")]
@@ -160,14 +149,3 @@ class Deflection:
 
         plt.show()
         return 0
-
-# =================================================================
-# Debugging
-
-DEBUG = False
-
-if DEBUG:
-    deflection_test = Deflection('B', 50)
-    deflection_test.plot_deflection()
-
-

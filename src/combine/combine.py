@@ -13,21 +13,17 @@ Author: Pietro Campolucci
 """
 
 # importing packages
+from src.combine.get_all import GetAll
 from src.input.input import Input
-from src.combine.max_stress import MaxStress
-from src.combine.twist import Twist
-from src.combine.deflection import Deflection
 
 
-class Combine():
+class Combine:
     """ combine class called for different scenarios """
 
-    def __init__(self, aircraft):
+    def __init__(self, aircraft, steps, step_size):
         self.a = aircraft
         # include and initialize input loads from the Input class
-        self.discrete_load_dict = Input(self.a).get_discrete()
-        self.aero_load = Input(self.a).aero_input()
-        self.cross_section_dict = Input(self.a).cross_section_input()
+        self.all = GetAll(aircraft, steps, step_size)
 
     def get_input_report(self):
         print("=" * 100)
@@ -40,25 +36,19 @@ class Combine():
         print("=" * 100)
         print("Calculating Deflection Along Aileron and Slope")
         print("=" * 100)
-        steps_deflection = 3
-        deflection_init = Deflection(self.a, steps_deflection)
-        deflection_init.plot_deflection()
+        self.all.get_deflection()
         return 0
 
     def get_twist_report(self):
         print("=" * 100)
         print("Calculating Twist Along Aileron and Rate")
         print("=" * 100)
-        steps_twist = 3
-        twist_init = Twist(self.a, steps_twist)
-        twist_init.plot_twist()
+        self.all.get_twist()
         return 0
 
     def get_max_stress_report(self):
         print("=" * 100)
         print("Calculating Von Mises Stress Distribution ...")
         print("=" * 100)
-        steps_stress = 3
-        stress_init = MaxStress(self.a, steps_stress)
-        stress_init.plot_shear_3d()
+        self.all.get_max_stress()
         return 0

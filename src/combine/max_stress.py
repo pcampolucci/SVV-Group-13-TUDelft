@@ -5,34 +5,34 @@ Title: Max Shear Stress tool
 import numpy as np
 import matplotlib.pyplot as plt
 from src.input.input import Input
-from src.loads.torque import Torque
-from src.loads.moment import Moment
-from tqdm import tqdm
 
 
 class MaxStress:
 
-    def __init__(self, aircraft, steps):
+    def __init__(self, cross_section, torque, moment_y, moment_z, input, aircraft, steps):
 
-        # initialize geometry and info
-        self.a = aircraft
-        self.steps = steps
-        self.input = Input(self.a).get_discrete()  # get input dict
-        self.q_lst = Input(self.a).cross_section_input().get_shear_center()[1]  # shear list
-        self.x_location = np.linspace(1e-10, self.input["la"][self.a], steps)  # get loads like steps
-
-        # get forces along span for stress computation
-        self.T = [float(Torque(self.a).T(i)) for i in tqdm(self.x_location, desc="Torque")]
-        self.My = [float(Moment(self.a).M_y(i)) for i in tqdm(self.x_location, desc="Moment Y")]
-        self.Mz = [float(Moment(self.a).M_z(i)) for i in tqdm(self.x_location, desc="Moment Z")]
+        self.cross_section = cross_section
+        self.T = torque
+        self.My = np.array(moment_y)
+        self.Mz = np.array(moment_z)
+        self.G = input['G'][aircraft]
+        self.t_sk = input['tsk'][aircraft]
+        self.t_sp = input['tsp'][aircraft]
+        self.la = input['la'][aircraft]
+        self.n1 = input['n_points'][aircraft]
+        self.h = input['h'][aircraft]/2
+        self.ca = input['Ca'][aircraft]
+        self.q_lst = self.cross_section.get_shear_center()[1]
+        self.i_yy = self.cross_section.get_moments_inertia()[2]
+        self.zc = self.cross_section.get_centroid()[1]
+        self.steps = steps//100
 
     # ============================================================================================================
     # GET AILERON TWIST
 
     def twist_of_aileron(self):
 
-        cross_section = Input(self.a).cross_section_input()
-        q1_lst, q2_lst, J, twist_rate_lst, twist_lst = cross_section.twist_of_aileron(self.T, self.input['G'][self.a])
+        q1_lst, q2_lst, J, twist_rate_lst, twist_lst = self.cross_section.twist_of_aileron(self.T, self.G)
 
         return q1_lst, q2_lst, J, twist_rate_lst, twist_lst  # J, twist rate and twist at every x location taken
 
@@ -45,33 +45,30 @@ class MaxStress:
 
         # input values
         qb1, qb2, qb3, qb4, qb5, qb6 = self.q_lst
-        t_sk = self.input['tsk'][self.a]
-        t_sp = self.input['tsp'][self.a]
 
-        tau_1 = [qb1[i] / t_sk for i in range(len(qb1))]
-        tau_2 = [qb2[i] / t_sp for i in range(len(qb2))]
-        tau_3 = [qb3[i] / t_sk for i in range(len(qb3))]
-        tau_4 = [qb4[i] / t_sk for i in range(len(qb4))]
-        tau_5 = [qb5[i] / t_sp for i in range(len(qb5))]
-        tau_6 = [qb6[i] / t_sk for i in range(len(qb6))]
+        tau_1 = [qb1[i] / self.t_sk for i in range(len(qb1))]
+        tau_2 = [qb2[i] / self.t_sp for i in range(len(qb2))]
+        tau_3 = [qb3[i] / self.t_sk for i in range(len(qb3))]
+        tau_4 = [qb4[i] / self.t_sk for i in range(len(qb4))]
+        tau_5 = [qb5[i] / self.t_sp for i in range(len(qb5))]
+        tau_6 = [qb6[i] / self.t_sk for i in range(len(qb6))]
 
         return tau_1, tau_2, tau_3, tau_4, tau_5, tau_6
 
     def shear_stress_due_to_torsion(self):
 
         # input values
-        t_sk = self.input['tsk'][self.a]
-        t_sp = self.input['tsp'][self.a]
         q1, q2 = self.twist_of_aileron()[:2]
 
-        tau_skin_cell_1_lst = [q1[i] / t_sk for i in range(len(q1))]
-        tau_skin_cell_2_lst = [q2[i] / t_sk for i in range(len(q1))]
-        tau_spar_lst = [(q2[i] - q1[i]) / t_sp for i in range(len(q1))]
+        tau_skin_cell_1_lst = [q1[i] / self.t_sk for i in range(len(q1))]
+        tau_skin_cell_2_lst = [q2[i] / self.t_sk for i in range(len(q1))]
+        tau_spar_lst = [(q2[i] - q1[i]) / self.t_sp for i in range(len(q1))]
 
         return tau_skin_cell_1_lst, tau_skin_cell_2_lst, tau_spar_lst
 
     def total_shear_stress(self):
-        """Calculates the total shear stress distribution tau_yz per section for every x location along the span and puts this in a list, so 6 lists for each spanwise location
+        """Calculates the total shear stress distribution tau_yz per section for every x location along the span
+           and puts this in a list, so 6 lists for each spanwise location
            it returns a list of lists with every list a shear stress distribution at a specific x location."""
 
         tau_1, tau_2, tau_3, tau_4, tau_5, tau_6 = self.shear_stress_due_to_shear()
@@ -99,33 +96,30 @@ class MaxStress:
     def z_location(self):
 
         # input
-        n1 = self.input['n_points'][self.a] # number of points checked per segment
-        h = self.input['h'][self.a] / 2
-        C_a = self.input['Ca'][self.a]
 
-        s_co2 = np.linspace(0, h, 2 * n1)
+        s_co2 = np.linspace(0, self.h, 2 * self.n1)
 
         ds = 0
         segment = [0, 1, 2]
         zco1 = []
         yco1 = []
-        h_seg = 0.5 * np.pi / ((len(segment) * n1) - 1)
+        h_seg = 0.5 * np.pi / ((len(segment) * self.n1) - 1)
         for sub_segment in segment:
-            for i in range(n1):
+            for i in range(self.n1):
                 b = h_seg * (i + ds)
-                zco1.append(-(h - h * np.cos(b)))
-                yco1.append(h * np.sin(b))
-            ds += n1
+                zco1.append(-(self.h - self.h * np.cos(b)))
+                yco1.append(self.h * np.sin(b))
+            ds += self.n1
 
         zco6 = zco1[::-1]
         yco6 = [-i for i in yco1[::-1]]
 
-        zco2 = 2 * n1 * [-h]
+        zco2 = 2 * self.n1 * [-self.h]
         yco2 = s_co2
         zco5 = zco2
-        yco5 = np.linspace(0, -h, 2 * n1)
-        zco3 = np.linspace(-h, -C_a, 7 * n1)
-        yco3 = np.linspace(h, 0, 7 * n1)
+        yco5 = np.linspace(0, -self.h, 2 * self.n1)
+        zco3 = np.linspace(-self.h, -self.ca, 7 * self.n1)
+        yco3 = np.linspace(self.h, 0, 7 * self.n1)
         zco4 = zco3[::-1]
         yco4 = [-i for i in yco3[::-1]]
 
@@ -134,10 +128,6 @@ class MaxStress:
     def direct_stress_distribution(self):  # for a unit moment in x and y direction
 
         yco1, zco1, yco2, zco2, yco3, zco3, yco4, zco4, yco5, zco5, yco6, zco6 = self.z_location()
-        Iyy = Input(self.a).cross_section_input().get_moments_inertia()[2]
-        zc = Input(self.a).cross_section_input().get_centroid()[1]
-        My = np.array(self.My)
-        Mz = np.array(self.Mz)
 
         direct_stress_per_x = []
 
@@ -145,12 +135,12 @@ class MaxStress:
             """Computes the Direct stress distrubtion along the cross-section at each point
              where the shear flow is calculated based on the Mx and My of a specific location along the span"""
 
-            sigma_xx_1 = [My * (zco1[i] - zc) / Iyy + Mz * yco1[i] for i in range(len(zco1))]
-            sigma_xx_2 = [My * (zco2[i] - zc) / Iyy + Mz * yco2[i] for i in range(len(zco2))]
-            sigma_xx_3 = [My * (zco3[i] - zc) / Iyy + Mz * yco3[i] for i in range(len(zco3))]
-            sigma_xx_4 = [My * (zco4[i] - zc) / Iyy + Mz * yco4[i] for i in range(len(zco4))]
-            sigma_xx_5 = [My * (zco5[i] - zc) / Iyy + Mz * yco5[i] for i in range(len(zco5))]
-            sigma_xx_6 = [My * (zco6[i] - zc) / Iyy + Mz * yco6[i] for i in range(len(zco6))]
+            sigma_xx_1 = [self.My * (float(zco1[i]) - self.zc) / self.i_yy + self.Mz * float(zco1[i]) for i in range(len(zco1))]
+            sigma_xx_2 = [self.My * (float(zco2[i]) - self.zc) / self.i_yy + self.Mz * float(zco2[i]) for i in range(len(zco2))]
+            sigma_xx_3 = [self.My * (float(zco3[i]) - self.zc) / self.i_yy + self.Mz * float(zco3[i]) for i in range(len(zco3))]
+            sigma_xx_4 = [self.My * (float(zco4[i]) - self.zc) / self.i_yy + self.Mz * float(zco4[i]) for i in range(len(zco4))]
+            sigma_xx_5 = [self.My * (float(zco5[i]) - self.zc) / self.i_yy + self.Mz * float(zco5[i]) for i in range(len(zco5))]
+            sigma_xx_6 = [self.My * (float(zco6[i]) - self.zc) / self.i_yy + self.Mz * float(zco6[i]) for i in range(len(zco6))]
 
             direct_stress_per_x.append(sigma_xx_1 + sigma_xx_2 + sigma_xx_3 + sigma_xx_4 + sigma_xx_5 + sigma_xx_6)
 
@@ -200,9 +190,7 @@ class MaxStress:
 
         yco1, zco1, yco2, zco2, yco3, zco3, yco4, zco4, yco5, zco5, yco6, zco6 = self.z_location()
         von_mis = np.array(self.von_mises_stress_distribution())
-
-        l_a = self.input['la'][self.a]
-        x_axis = np.linspace(0, l_a, len(von_mis))
+        x_axis = np.linspace(0, self.la, len(von_mis))
 
         for i, j in zip([yco2, yco3, yco4, yco5, yco6], [zco2, zco3, zco4, zco5, zco6]):
 
@@ -225,10 +213,4 @@ class MaxStress:
         plt.show()
         return 0
 
-# debugging ========================================
-DEBUG = True
-
-if DEBUG:
-    shear = MaxStress('A', 5)
-    shear.plot_shear_3d()
 
