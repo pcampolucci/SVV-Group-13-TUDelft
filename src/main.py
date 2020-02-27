@@ -20,7 +20,7 @@ aircraft = choose_aircraft()
 print()
 
 # get reports
-start = Combine(aircraft, 1000, 0.001)
+start = Combine(aircraft, 1000, 0.1)
 
 input_report = start.get_input_report()
 deflection = start.get_deflection_report()

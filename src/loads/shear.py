@@ -1,8 +1,5 @@
 import numpy as np
-from src.input.input import Input
 from src.loads.distributed_load import magnitude_resultant
-from src.loads.discrete_load import PointLoads
-from src.input.input import input_dict
 
 
 class Shear:
@@ -26,22 +23,22 @@ class Shear:
         if x > la:
             raise ValueError('Too far buddy')
 
-        Sy = - magnitude_resultant(x, self.resultants, self.step_size)  # aero force at la
+        Sy = + magnitude_resultant(x, self.resultants, self.step_size)  # aero force at la
 
         if x > x1:
-            Sy += F_y1
+            Sy -= F_y1
 
         if x > x2 - xa / 2:
-            Sy += F_a * np.sin(theta)
+            Sy -= F_a * np.sin(theta)
 
         if x > x2:
-            Sy += -F_y2
+            Sy += F_y2
 
         if x > x2 + xa / 2:
-            Sy += -P * np.sin(theta)
+            Sy += P * np.sin(theta)
 
         if x > x3:
-            Sy += F_y3
+            Sy -= F_y3
 
         return Sy
 
@@ -60,16 +57,16 @@ class Shear:
         Sz = 0
 
         if x > x1:
-            Sz += F_z1
+            Sz -= F_z1
 
         if x > x2 - xa / 2:
-            Sz += F_a * np.cos(theta)
+            Sz -= F_a * np.cos(theta)
 
         if x > x2:
-            Sz += F_z2
+            Sz -= F_z2
 
         if x > x2 + xa / 2:
-            Sz += -P * np.cos(theta)
+            Sz += P * np.cos(theta)
 
         if x > x3:
             Sz += F_z3

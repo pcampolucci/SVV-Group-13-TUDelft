@@ -3,13 +3,12 @@ Script will initialize all the loads so that the combination scripts do not need
 """
 
 from tqdm import tqdm
-import numpy as np
-from src.input.input import Input
 from src.loads.moment import Moment
 from src.loads.shear import Shear
 from src.loads.torque import Torque
 from src.loads.discrete_load import PointLoads
 from src.loads.distributed_load import *  # not a class, just sending and executing functions
+import matplotlib.pyplot as plt
 
 
 class Loads:
@@ -17,6 +16,7 @@ class Loads:
     def __init__(self, aircraft, steps, step_size):
 
         print("Initializing load class ...")
+        self.a = aircraft
         self.steps = steps
         self.step_size = step_size
 
@@ -76,6 +76,53 @@ class Loads:
 
         return torque_lst
 
+    def plot_forces(self):
+
+        print("=" * 100)
+        print(f"Plotting Forces Report for Aircraft: {self.a}")
+        print("=" * 100, "\n")
+
+        # plot input dictionary of all the forces obtained
+        force_lst = self.point_loads
+        string_lst = ["F_z1", "F_z2", "F_z3", "F_a", "F_y1", "F_y2", "F_y3"]
+
+        for i in range(7):
+            print(f"| {string_lst[i]}: {force_lst[i]}")
+        print()
+
+        # plot distribution of forces along span
+        plt.figure(figsize=[17, 10])
+        x_axis = self.x_location
+
+        plt.suptitle(f"Load Distribution for Aircraft: {self.a}, (steps={self.steps})")
+
+        plt.subplot(3, 2, 1)
+        plt.title(f"Moment Z")
+        plt.plot(x_axis, self.send_moment_z(), color='b')
+        plt.grid()
+
+        plt.subplot(3, 2, 2)
+        plt.title(f"Moment Y")
+        plt.plot(x_axis, self.send_moment_y(), color='b')
+        plt.grid()
+
+        plt.subplot(3, 2, 3)
+        plt.title(f"Shear Z")
+        plt.plot(x_axis, self.send_shear_z(), color='b')
+        plt.grid()
+
+        plt.subplot(3, 2, 4)
+        plt.title(f"Shear Y")
+        plt.plot(x_axis, self.send_shear_y(), color='b')
+        plt.grid()
+
+        plt.subplot(3, 2, 5)
+        plt.title(f"Torque")
+        plt.plot(x_axis, self.send_torque(), color='b')
+        plt.grid()
+
+        plt.show()
+
 
 # =========================================================================================================
 # DEBUGGING IN GENERAL
@@ -84,7 +131,7 @@ DEBUG = False
 
 if DEBUG:
 
-    load_init = Loads('A', 1000, 0.1)  # by doing this we initialize every single load
+    load_init = Loads('A', 1000, 0.001)  # by doing this we initialize every single load
 
     # get the time to send all the completed loads to destination
     load_init.send_moment_y()
@@ -92,3 +139,6 @@ if DEBUG:
     load_init.send_shear_y()
     load_init.send_shear_z()
     load_init.send_torque()
+
+    # plot results
+    load_init.plot_forces()

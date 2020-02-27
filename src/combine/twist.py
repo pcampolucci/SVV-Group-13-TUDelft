@@ -38,12 +38,13 @@ class Twist:
         x = np.linspace(0, self.span, self.steps)
 
         # start plotting figure
-        plt.figure()
+        plt.figure(figsize=[8, 15])
 
         plt.subplot(2,1,1)
         plt.title(f"Twist rate for aircraft: {self.aircraft} [rad/m]")
         plt.plot(x, tr, color='b', alpha=0.4)
         plt.scatter(x, tr, color='b', s=0.4)
+        plt.grid()
         plt.xlabel("Span [m]")
         plt.ylabel("Twist Rate [rad/m]")
 
@@ -51,6 +52,7 @@ class Twist:
         plt.title(f"Twist for aircraft: {self.aircraft} [rad]")
         plt.plot(x, tl, color='b', alpha=0.4)
         plt.scatter(x, tl, color='b', s=0.4)
+        plt.grid()
         plt.xlabel("Span [m]")
         plt.ylabel("Twist [rad]")
 

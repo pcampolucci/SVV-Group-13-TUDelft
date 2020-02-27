@@ -23,6 +23,7 @@ class MaxStress:
         self.h = input['h'][aircraft]/2
         self.ca = input['Ca'][aircraft]
         self.q_lst = self.cross_section.get_shear_center()[1]
+        self.i_zz = self.cross_section.get_moments_inertia()[0]
         self.i_yy = self.cross_section.get_moments_inertia()[2]
         self.zc = self.cross_section.get_centroid()[1]
         self.steps = steps//100
@@ -135,12 +136,12 @@ class MaxStress:
             """Computes the Direct stress distrubtion along the cross-section at each point
              where the shear flow is calculated based on the Mx and My of a specific location along the span"""
 
-            sigma_xx_1 = [self.My * (float(zco1[i]) - self.zc) / self.i_yy + self.Mz * float(zco1[i]) for i in range(len(zco1))]
-            sigma_xx_2 = [self.My * (float(zco2[i]) - self.zc) / self.i_yy + self.Mz * float(zco2[i]) for i in range(len(zco2))]
-            sigma_xx_3 = [self.My * (float(zco3[i]) - self.zc) / self.i_yy + self.Mz * float(zco3[i]) for i in range(len(zco3))]
-            sigma_xx_4 = [self.My * (float(zco4[i]) - self.zc) / self.i_yy + self.Mz * float(zco4[i]) for i in range(len(zco4))]
-            sigma_xx_5 = [self.My * (float(zco5[i]) - self.zc) / self.i_yy + self.Mz * float(zco5[i]) for i in range(len(zco5))]
-            sigma_xx_6 = [self.My * (float(zco6[i]) - self.zc) / self.i_yy + self.Mz * float(zco6[i]) for i in range(len(zco6))]
+            sigma_xx_1 = [self.My[j] * abs((zco1[i] - self.zc)) / self.i_yy - self.Mz[j] * abs(yco1[i]) / self.i_zz for i in range(len(zco1))]
+            sigma_xx_2 = [self.My[j] * abs((zco2[i] - self.zc)) / self.i_yy - self.Mz[j] * abs(yco2[i]) / self.i_zz for i in range(len(zco2))]
+            sigma_xx_3 = [self.My[j] * (zco3[i] - self.zc) / self.i_yy - self.Mz[j] * abs(yco3[i]) / self.i_zz for i in range(len(zco3))]
+            sigma_xx_4 = [self.My[j] * (zco4[i] - self.zc) / self.i_yy + self.Mz[j] * abs(yco4[i]) / self.i_zz for i in range(len(zco4))]
+            sigma_xx_5 = [self.My[j] * abs((zco5[i] - self.zc)) / self.i_yy + self.Mz[j] * abs(yco5[i]) / self.i_zz for i in range(len(zco5))]
+            sigma_xx_6 = [self.My[j] * abs((zco6[i] - self.zc)) / self.i_yy + self.Mz[j] * abs(yco6[i]) / self.i_zz for i in range(len(zco6))]
 
             direct_stress_per_x.append(sigma_xx_1 + sigma_xx_2 + sigma_xx_3 + sigma_xx_4 + sigma_xx_5 + sigma_xx_6)
 
@@ -156,8 +157,9 @@ class MaxStress:
         sigma_vm_distribution_at_every_x_loc = []
 
         for j in range(self.steps):
-            sigma_vm = [np.sqrt(direct_stress_distribution[j-1][i] ** 2 + 3 * shear_stress_distribution[j-1][i]
-                                ** 2) for i in range(len(direct_stress_distribution[0]))]
+            sigma_vm = [np.sqrt(direct_stress_distribution[j - 1][i] ** 2 + 3 *
+                        shear_stress_distribution[j - 1][i] ** 2) for i
+                        in range(len(direct_stress_distribution[0]))]
             sigma_vm_distribution_at_every_x_loc.append(sigma_vm)
 
         return sigma_vm_distribution_at_every_x_loc
@@ -201,7 +203,7 @@ class MaxStress:
         ax = fig.add_subplot(111, projection='3d')
 
         for i in range(len(von_mis)):
-            p = ax.scatter(zco1, yco1, x_axis[i], c=von_mis[i, :, i], cmap='jet')
+            p = ax.scatter(zco1, yco1, x_axis[i], c=von_mis[i], cmap='jet')
 
         c = fig.colorbar(p)
         c.set_label('Von Mises Stress [N/m^2]')

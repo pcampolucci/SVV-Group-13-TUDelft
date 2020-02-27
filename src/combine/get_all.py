@@ -47,3 +47,9 @@ class GetAll:
         init_twist.plot_twist()
 
         return init_twist
+
+    def get_forces(self):
+
+        self.init.plot_forces()
+
+        return 0

@@ -26,13 +26,16 @@ class Combine:
         self.all = GetAll(aircraft, steps, step_size)
 
     def get_input_report(self):
+        print()
         print("=" * 100)
         print(f"Fetching Input Parameters for aircraft: {self.a}")
         print("=" * 100)
         Input(self.a).get_input_report()
+        self.all.get_forces()
         return 0
 
     def get_deflection_report(self):
+        print()
         print("=" * 100)
         print("Calculating Deflection Along Aileron and Slope")
         print("=" * 100)
@@ -40,6 +43,7 @@ class Combine:
         return 0
 
     def get_twist_report(self):
+        print()
         print("=" * 100)
         print("Calculating Twist Along Aileron and Rate")
         print("=" * 100)
@@ -47,6 +51,7 @@ class Combine:
         return 0
 
     def get_max_stress_report(self):
+        print()
         print("=" * 100)
         print("Calculating Von Mises Stress Distribution ...")
         print("=" * 100)

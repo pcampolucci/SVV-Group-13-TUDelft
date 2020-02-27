@@ -28,13 +28,13 @@ class Moment:
 
         # function
         if x > x1:
-            my += F_z1*(x-x1)
+            my -= F_z1*(x-x1)
         if x > xa1:
-            my += F_a*np.cos(theta)*(x-xa1)
+            my -= F_a*np.cos(theta)*(x-xa1)
         if x > x2:
-            my += F_z2*(x-x2)
+            my -= F_z2*(x-x2)
         if x > xa2:
-            my -= P*np.cos(theta)*(x-x2)
+            my += P*np.cos(theta)*(x-x2)
         if x > x3:
             my += F_z3*(x-x3)
 
@@ -52,19 +52,19 @@ class Moment:
             raise ValueError('Too far buddy')
 
         # Moment calculation with McCauly step functions
-        mz = - moment_resultant(x, self.moments, self.step_size)
+        mz = + moment_resultant(x, self.moments, self.step_size)
 
         # calculate moment
         if x > x1:
-            mz += F_y1*(x-x1)
+            mz -= F_y1*(x-x1)
         if x > xa1:
-            mz += F_a*np.sin(theta)*(x-xa1)
+            mz -= F_a*np.sin(theta)*(x-xa1)
         if x > x2:
             mz += F_y2*(x-x2)
         if x > xa2:
-            mz -= P*np.sin(theta)*(x-x2)
+            mz += P*np.sin(theta)*(x-x2)
         if x > x3:
-            mz += F_y3*(x-x3)
+            mz -= F_y3*(x-x3)
 
         return mz
 

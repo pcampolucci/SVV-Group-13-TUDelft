@@ -126,7 +126,7 @@ class AeroLoad:
         plt.title(f"Aerodynamic load distribution for aircraft: {self.a}")
 
         # plot span
-        plt.plot([0, -self.span], [0, 0] , color='k', label='span', linewidth=2)
+        plt.plot([0, -self.span], [0, 0], color='k', label='wingspan', linewidth=2)
 
         # plot discrete distribution
         for i in tqdm(range(len(q_x)), desc="Getting discrete distribution"):
@@ -134,14 +134,15 @@ class AeroLoad:
         plt.plot(0, 0, color='b', label='discrete resultants')
 
         # plot distribution with linear interpolation
-        big_span = np.linspace(coord[0], coord[-1], 300)
+        big_span = np.linspace(coord[0], coord[-1], 100)
         big_res = [self.get_q(x) for x in tqdm(big_span, desc="Getting linear distribution")]
-        plt.plot(big_span, big_res, color='r', label='load function')
+        plt.plot(big_span, big_res, color='r', label='linear interpolation')
 
         # plot legend and labels
         plt.legend(loc='lower left')
         plt.xlabel("Span [m]")
         plt.ylabel("Load distribution [kN/m]")
+        plt.grid()
 
         plt.show()
         return 0

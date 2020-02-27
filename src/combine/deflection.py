@@ -32,18 +32,18 @@ class Deflection:
 
         qx = deflection_resultant(x2, self.discrete_deflections, self.step_size) # aero force at la
 
-        v = -1 / E / Izz * (-qx) + c1 * x + c2
+        v = -1 / E / Izz * (qx) + c1 * x + c2
 
         if x > x1:
-            v += -1 / E / Izz * (F_y1 / 6 * (x - x1) ** (3))
+            v -= -1 / E / Izz * (F_y1 / 6 * (x - x1) ** (3))
         if x > x2 - xa / 2:
-            v += -1 / E / Izz * (F_a * np.sin(theta) / 6 * (x - x2 + xa / 2) ** (3))
+            v -= -1 / E / Izz * (F_a * np.sin(theta) / 6 * (x - x2 + xa / 2) ** (3))
         if x > x2:
-            v += -1 / E / Izz * (-F_y2 / 6 * (x - x2) ** (3))
+            v += -1 / E / Izz * (F_y2 / 6 * (x - x2) ** (3))
         if x > x2 + xa / 2:
-            v += -1 / E / Izz * (-P * np.sin(theta) / 6 * (x - x2 - xa / 2) ** (3))
+            v += -1 / E / Izz * (P * np.sin(theta) / 6 * (x - x2 - xa / 2) ** (3))
         if x > x3:
-            v += -1 / E / Izz * (F_y3 / 6 * (x - x3) ** (3))
+            v -= -1 / E / Izz * (F_y3 / 6 * (x - x3) ** (3))
 
         return v
 
@@ -57,13 +57,13 @@ class Deflection:
         w = c3 * x + c4
 
         if x > x1:
-            w += -1 / E / Izz * (F_z1 / 6 * (x - x1) ** (3))
+            w -= -1 / E / Izz * (F_z1 / 6 * (x - x1) ** (3))
         if x > x2 - xa / 2:
-            w += -1 / E / Izz * (F_a * np.cos(theta) / 6 * (x - x2 + xa / 2) ** (3))
+            w -= -1 / E / Izz * (F_a * np.cos(theta) / 6 * (x - x2 + xa / 2) ** (3))
         if x > x2:
-            w += -1 / E / Izz * (F_z2 / 6 * (x - x2) ** (3))
+            w -= -1 / E / Izz * (F_z2 / 6 * (x - x2) ** (3))
         if x > x2 + xa / 2:
-            w += -1 / E / Izz * (-P * np.cos(theta) / 6 * (x - x2 - xa / 2) ** (3))
+            w += -1 / E / Izz * (P * np.cos(theta) / 6 * (x - x2 - xa / 2) ** (3))
         if x > x3:
             w += -1 / E / Izz * (F_z3 / 6 * (x - x3) ** (3))
 
@@ -79,22 +79,22 @@ class Deflection:
 
         qx = angle_resultant(1, self.discrete_angles, self.step_size)
 
-        dvdx = -1 / E / Izz * (-qx) + c1
+        dvdx = -1 / E / Izz * (qx) + c1
 
         if x > x1:
-            dvdx += -1 / E / Izz * (F_y1 / 2 * (x - x1) ** (2))
+            dvdx -= -1 / E / Izz * (F_y1 / 2 * (x - x1) ** (2))
 
         if x > x2 - xa / 2:
-            dvdx += -1 / E / Izz * (F_a * np.sin(theta) / 2 * (x - x2 + xa / 2) ** (2))
+            dvdx -= -1 / E / Izz * (F_a * np.sin(theta) / 2 * (x - x2 + xa / 2) ** (2))
 
         if x > x2:
-            dvdx += -1 / E / Izz * (-F_y2 / 2 * (x - x2) ** (2))
+            dvdx += -1 / E / Izz * (F_y2 / 2 * (x - x2) ** (2))
 
         if x > x2 + xa / 2:
-            dvdx += -1 / E / Izz * (-P * np.sin(theta) / 2 * (x - x2 - xa / 2) ** (2))
+            dvdx += -1 / E / Izz * (P * np.sin(theta) / 2 * (x - x2 - xa / 2) ** (2))
 
         if x > x3:
-            dvdx += -1 / E / Izz * (F_y3 / 2 * (x - x3) ** (2))
+            dvdx -= -1 / E / Izz * (F_y3 / 2 * (x - x3) ** (2))
 
         return dvdx
 
@@ -108,16 +108,16 @@ class Deflection:
         dwdx = c3
 
         if x > x1:
-            dwdx += -1 / E / Iyy * (F_z1 / 2 * (x - x1) ** (2))
+            dwdx -= -1 / E / Iyy * (F_z1 / 2 * (x - x1) ** (2))
 
         if x > x2 - xa / 2:
-            dwdx = -1 / E / Iyy * (F_a * np.cos(theta) / 2 * (x - x2 + xa / 2) ** (2))
+            dwdx -= -1 / E / Iyy * (F_a * np.cos(theta) / 2 * (x - x2 + xa / 2) ** (2))
 
         if x > x2:
-            dwdx += -1 / E / Iyy * (F_z2 / 2 * (x - x2) ** (2))
+            dwdx -= -1 / E / Iyy * (F_z2 / 2 * (x - x2) ** (2))
 
         if x > x2 + xa / 2:
-            dwdx += -1 / E / Iyy * (-P * np.cos(theta) / 2 * (x - x2 - xa / 2) ** (2))
+            dwdx += -1 / E / Iyy * (P * np.cos(theta) / 2 * (x - x2 - xa / 2) ** (2))
 
         if x > x3:
             dwdx += -1 / E / Iyy * (F_z3 / 2 * (x - x3) ** (2))
@@ -133,19 +133,27 @@ class Deflection:
         s_y = [float(self.Slope_y(d)) for d in tqdm(x_axis, desc="getting y slope")]
         s_z = [float(self.Slope_z(d)) for d in tqdm(x_axis, desc="getting z slope")]
 
-        plt.figure(figsize=[10, 8])
+        plt.figure(figsize=[15, 8])
+
         a = plt.subplot(221)
         plt.title(f"Deflection in y direction for {self.aircraft}")
-        a.plot(x_axis, d_y)
+        a.plot(x_axis, d_y, color='b')
+        plt.grid()
+
         b = plt.subplot(222)
         plt.title(f"Deflection in z direction for {self.aircraft}")
-        b.plot(x_axis, d_z)
+        b.plot(x_axis, d_z, color='b')
+        plt.grid()
+
         c = plt.subplot(223)
         plt.title(f"Slope in y direction for {self.aircraft}")
-        c.plot(x_axis, s_y)
+        c.plot(x_axis, s_y, color='b')
+        plt.grid()
+
         d = plt.subplot(224)
         plt.title(f"Slope in z direction for {self.aircraft}")
-        d.plot(x_axis, s_z)
+        d.plot(x_axis, s_z, color='b')
+        plt.grid()
 
         plt.show()
         return 0
