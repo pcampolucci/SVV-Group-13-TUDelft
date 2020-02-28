@@ -70,7 +70,7 @@ def increase_area_structures(debug=False):
     input_dict['tsk'][a] = 0.003
     test_section = CrossSection(input_dict, a)
     get_plot(debug, test_section, 'skin thickness')
-    assert test_section.get_centroid()[1] > base_centroid
+    assert test_section.get_centroid()[1] < base_centroid
     assert test_section.get_moments_inertia()[0] > base_i_zz
     assert test_section.get_moments_inertia()[2] > base_i_xx
     assert test_section.get_shear_center() < base_shear_center
@@ -80,7 +80,7 @@ def increase_area_structures(debug=False):
     input_dict['tsp'][a] = 0.006
     test_section = CrossSection(input_dict, a)
     get_plot(debug, test_section, 'rib thickness')
-    assert test_section.get_centroid()[1] == base_centroid
+    assert test_section.get_centroid()[1] > base_centroid
     assert test_section.get_moments_inertia()[0] > base_i_zz
     assert test_section.get_moments_inertia()[2] > base_i_xx
     assert test_section.get_shear_center() > base_shear_center
@@ -94,7 +94,7 @@ def increase_area_structures(debug=False):
     assert test_section.get_moments_inertia()[0] > base_i_zz
     assert test_section.get_moments_inertia()[2] > base_i_xx
     assert test_section.stiffener_area() > area
-    assert test_section.get_shear_center() > base_shear_center
+    assert test_section.get_shear_center() < base_shear_center
 
     # combine skin thickness and circle increase change
     input_dict['tst'][a] = 0.0012

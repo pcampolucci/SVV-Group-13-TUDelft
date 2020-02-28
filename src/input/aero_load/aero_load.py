@@ -11,7 +11,6 @@ from src.input.general.discrete_input import input_dict
 from tqdm import tqdm
 from mpl_toolkits.mplot3d import Axes3D
 
-
 # define class
 class AeroLoad:
     """ the class gets a .dat file and plots the distribution, plus other info """

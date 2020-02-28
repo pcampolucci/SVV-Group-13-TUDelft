@@ -16,7 +16,6 @@ Author: Pietro Campolucci
 from src.combine.get_all import GetAll
 from src.input.input import Input
 
-
 class Combine:
     """ combine class called for different scenarios """
 

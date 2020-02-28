@@ -46,5 +46,4 @@ input_dict = {
 
     # Other
     'steps': {'A': 0.3, 'B': 0.3}
-
 }
